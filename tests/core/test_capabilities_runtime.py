@@ -14,6 +14,7 @@ from deeptutor.capabilities.chat import ChatCapability
 from deeptutor.capabilities.deep_question import DeepQuestionCapability
 from deeptutor.capabilities.deep_research import DeepResearchCapability
 from deeptutor.capabilities.deep_solve import DeepSolveCapability
+from deeptutor.capabilities.exam_simulator import ExamSimulatorCapability
 from deeptutor.core.context import Attachment, UnifiedContext
 from deeptutor.core.stream import StreamEvent, StreamEventType
 from deeptutor.core.stream_bus import StreamBus
@@ -107,6 +108,67 @@ async def test_chat_capability_streams_content_and_geogebra_context(
     assert any(event.type == StreamEventType.SOURCES for event in events)
     assert any(event.type == StreamEventType.CONTENT and "assistant output" in event.content for event in events)
     assert "GGB commands" in captured["process"]["message"]
+
+
+@pytest.mark.asyncio
+async def test_exam_simulator_capability_streams_progress_and_result() -> None:
+    from deeptutor.services.exam_simulator import reset_exam_simulator_service_for_tests
+
+    reset_exam_simulator_service_for_tests()
+    context = UnifiedContext(
+        user_message="Start exam",
+        language="en",
+        config_overrides={
+            "mode": "strict",
+            "topic": "Linear algebra",
+            "duration_minutes": 45,
+            "question_mix": {"mcq": 5, "short": 2, "long": 1},
+            "generation_source": "topic_only",
+        },
+    )
+    capability = ExamSimulatorCapability()
+    events = await _collect_events(lambda bus: capability.run(context, bus))
+
+    assert capability.manifest.name == "exam_simulator"
+    assert any(
+        event.type == StreamEventType.PROGRESS
+        and event.stage == "generation"
+        and "strict exam" in event.content.lower()
+        for event in events
+    )
+    assert any(
+        event.type == StreamEventType.PROGRESS
+        and event.stage == "delivery"
+        for event in events
+    )
+    result_event = next(event for event in events if event.type == StreamEventType.RESULT)
+    meta = result_event.metadata
+    assert meta.get("attempt_id")
+    assert meta.get("question_count") == 8
+    assert len(meta.get("questions") or []) == 8
+    assert "deadline" in (meta.get("response") or "").lower()
+
+
+@pytest.mark.asyncio
+async def test_exam_simulator_capability_emits_error_on_invalid_config() -> None:
+    from deeptutor.services.exam_simulator import reset_exam_simulator_service_for_tests
+
+    reset_exam_simulator_service_for_tests()
+    context = UnifiedContext(
+        user_message="Start exam",
+        language="en",
+        config_overrides={
+            "mode": "strict",
+            "topic": "X",
+            "duration_minutes": 2,
+            "question_mix": {"mcq": 1, "short": 0, "long": 0},
+            "generation_source": "topic_only",
+        },
+    )
+    capability = ExamSimulatorCapability()
+    events = await _collect_events(lambda bus: capability.run(context, bus))
+    err = next(e for e in events if e.type == StreamEventType.ERROR)
+    assert "Invalid exam simulator config" in err.content or "duration" in err.content.lower()
 
 
 @pytest.mark.asyncio

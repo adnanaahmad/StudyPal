@@ -16,8 +16,11 @@ import sys
 
 from deeptutor.logging import get_logger
 from deeptutor.services.rag.components.routing import FileTypeRouter
-
-from deeptutor.services.rag.factory import DEFAULT_PROVIDER, LEGACY_PROVIDER_ALIASES, normalize_provider_name
+from deeptutor.services.rag.factory import (
+    DEFAULT_PROVIDER,
+    LEGACY_PROVIDER_ALIASES,
+    normalize_provider_name,
+)
 
 logger = get_logger("KnowledgeBaseManager")
 
@@ -529,14 +532,18 @@ class KnowledgeBaseManager:
         raw_count = 0
         images_count = 0
         content_lists_count = 0
+        raw_document_filenames: list[str] = []
 
         if dir_exists:
             try:
-                raw_count = (
-                    len([f for f in raw_dir.iterdir() if f.is_file()]) if raw_dir.exists() else 0
-                )
+                if raw_dir and raw_dir.exists():
+                    raw_document_filenames = sorted(
+                        f.name for f in raw_dir.iterdir() if f.is_file()
+                    )
+                    raw_count = len(raw_document_filenames)
             except Exception:
-                pass
+                raw_document_filenames = []
+                raw_count = 0
 
             try:
                 images_count = (
@@ -561,6 +568,7 @@ class KnowledgeBaseManager:
 
         info["statistics"] = {
             "raw_documents": raw_count,
+            "raw_document_filenames": raw_document_filenames,
             "images": images_count,
             "content_lists": content_lists_count,
             "rag_initialized": rag_initialized,

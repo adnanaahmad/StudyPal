@@ -461,6 +461,76 @@
   animation: session-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* Exam simulator fullscreen should render as a normal page surface, not tinted overlay. */
+.exam-take-root:fullscreen {
+  margin-top: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  padding: 1.5rem;
+  overflow-y: auto;
+  background: var(--background) !important;
+}
+
+.exam-take-root:fullscreen::backdrop {
+  background: var(--background);
+}
+
+.exam-take-root:-webkit-full-screen {
+  margin-top: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  padding: 1.5rem;
+  overflow-y: auto;
+  background: var(--background) !important;
+}
+
+.exam-take-root:-webkit-full-screen::backdrop {
+  background: var(--background);
+}
+
+/* Auto-fullscreen target used by exam start button */
+.exam-fullscreen-viewport:fullscreen {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 0;
+  background: #F8FAFC !important;
+  color: #0F172A;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --secondary: #F1F5F9;
+  --muted-foreground: #64748B;
+  --border: #E2E8F0;
+}
+
+.exam-fullscreen-viewport:fullscreen::backdrop {
+  background: #F8FAFC;
+}
+
+.exam-fullscreen-viewport:-webkit-full-screen {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 0;
+  background: #F8FAFC !important;
+  color: #0F172A;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --secondary: #F1F5F9;
+  --muted-foreground: #64748B;
+  --border: #E2E8F0;
+}
+
+.exam-fullscreen-viewport:-webkit-full-screen::backdrop {
+  background: #F8FAFC;
+}
+
 @keyframes breathe {
   0%, 100% {
     transform: scale(1);

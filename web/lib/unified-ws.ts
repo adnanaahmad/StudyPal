@@ -132,8 +132,8 @@ export class UnifiedWSClient {
       this.onClose?.();
     };
 
-    this.ws.onerror = (err) => {
-      console.error("WS error:", err);
+    this.ws.onerror = () => {
+      this.onClose?.();
     };
   }
 

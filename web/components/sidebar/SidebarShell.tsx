@@ -10,6 +10,7 @@ import {
   Brain,
   GraduationCap,
   Headphones,
+  ListChecks,
   MessageSquare,
   Network,
   PanelLeftClose,
@@ -39,6 +40,7 @@ const PRIMARY_NAV: NavEntry[] = [
   { href: "/whiteboard", label: "Whiteboard", icon: PenSquare },
   { href: "/mindmap", label: "Mindmap", icon: Network },
   { href: "/podcasts", label: "Podcasts", icon: Headphones },
+  { href: "/exam", label: "Exam Simulator", icon: ListChecks },
   { href: "/knowledge", label: "Knowledge", icon: BookOpen },
   { href: "/memory", label: "Memory", icon: Brain },
 ];

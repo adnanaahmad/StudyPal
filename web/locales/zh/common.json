@@ -11,11 +11,13 @@
   "whiteboard.aiPanel.title": "AI Assistant",
   "whiteboard.aiPanel.placeholder": "Ask AI to draw or modify...",
   "whiteboard.aiPanel.welcome": "Ask me to generate or modify your diagram. I can use your knowledge base and session context.",
+  "whiteboard.aiPanel.generating": "生成中…",
   "whiteboard.canvas.autoSaving": "Auto-saving...",
   "whiteboard.canvas.saved": "Saved just now",
   "whiteboard.canvas.saveFailed": "Save failed — will retry",
   "whiteboard.canvas.loadError": "Failed to load canvas",
   "whiteboard.canvas.retry": "Retry",
+  "whiteboard.canvas.title": "白板画布",
   "whiteboard.source.none": "None",
   "whiteboard.source.rag": "Knowledge Base",
   "whiteboard.source.web": "Web"
