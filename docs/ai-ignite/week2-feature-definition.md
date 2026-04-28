@@ -4,7 +4,7 @@
 
 - **Project name:** StudyPal (built on DeepTutor by HKU Data Intelligence Lab)
 - **Team:** x-fast
-- **Team members:** Adnan Ahmad (Lead), Bismah Babar
+- **Team members:** Adnan Ahmad (Lead)
 - **Meeting objective:** Review idea with manager and refine approach into a buildable roadmap
 
 ## Problem Statement (Refined)
