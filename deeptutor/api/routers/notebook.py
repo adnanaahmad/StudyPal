@@ -41,7 +41,15 @@ class AddRecordRequest(BaseModel):
     """Add record request"""
 
     notebook_ids: list[str]
-    record_type: Literal["solve", "question", "research", "co_writer", "chat", "guided_learning"]
+    record_type: Literal[
+        "solve",
+        "question",
+        "research",
+        "co_writer",
+        "chat",
+        "guided_learning",
+        "whiteboard",
+    ]
     title: str
     summary: str = ""
     user_query: str
@@ -70,15 +78,26 @@ class UpdateRecordRequest(BaseModel):
 # === API Endpoints ===
 
 
+def _summary_source_from_metadata(metadata: dict) -> str | None:
+    raw = metadata.get("summary_source")
+    if not isinstance(raw, str):
+        return None
+    text = raw.strip()
+    if not text:
+        return None
+    return text[:6000]
+
+
 async def _build_record_summary(request: AddRecordRequest) -> str:
     if request.summary.strip():
         return request.summary.strip()
+    summary_source = _summary_source_from_metadata(request.metadata or {})
     agent = NotebookSummarizeAgent(language=str(request.metadata.get("ui_language", "en")))
     return await agent.summarize(
         title=request.title,
         record_type=request.record_type,
         user_query=request.user_query,
-        output=request.output,
+        output=summary_source or request.output,
         metadata=request.metadata,
     )
 
@@ -87,17 +106,18 @@ async def _stream_add_record_with_summary(
     request: AddRecordRequest,
 ) -> AsyncGenerator[str, None]:
     try:
-        agent = NotebookSummarizeAgent(language=str(request.metadata.get("ui_language", "en")))
         summary_parts: list[str] = []
         if request.summary.strip():
             summary_parts.append(request.summary.strip())
             yield f"data: {json.dumps({'type': 'summary_chunk', 'content': request.summary.strip()}, ensure_ascii=False)}\n\n"
         else:
+            summary_source = _summary_source_from_metadata(request.metadata or {})
+            agent = NotebookSummarizeAgent(language=str(request.metadata.get("ui_language", "en")))
             async for chunk in agent.stream_summary(
                 title=request.title,
                 record_type=request.record_type,
                 user_query=request.user_query,
-                output=request.output,
+                output=summary_source or request.output,
                 metadata=request.metadata,
             ):
                 if not chunk:

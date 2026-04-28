@@ -15,6 +15,7 @@ interface WhiteboardAIPanelProps {
   getCurrentXml: () => void;
   onXmlGenerated: (xml: string) => void;
   pendingXmlRef: React.MutableRefObject<string | null>;
+  onMessagesChange?: (messages: Message[]) => void;
 }
 
 export function WhiteboardAIPanel({
@@ -22,6 +23,7 @@ export function WhiteboardAIPanel({
   getCurrentXml,
   onXmlGenerated,
   pendingXmlRef,
+  onMessagesChange,
 }: WhiteboardAIPanelProps) {
   const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>([
@@ -37,6 +39,10 @@ export function WhiteboardAIPanel({
       setCurrentSessionId(sessionId);
     }
   }, [sessionId]);
+
+  useEffect(() => {
+    onMessagesChange?.(messages);
+  }, [messages, onMessagesChange]);
 
   const handleSend = useCallback(async () => {
     const prompt = input.trim();

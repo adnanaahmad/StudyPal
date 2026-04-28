@@ -28,6 +28,7 @@ class RecordType(str, Enum):
     CO_WRITER = "co_writer"
     CHAT = "chat"
     GUIDED_LEARNING = "guided_learning"
+    WHITEBOARD = "whiteboard"
 
 
 class NotebookRecord(BaseModel):
@@ -381,6 +382,7 @@ class NotebookManager:
             "co_writer": 0,
             "chat": 0,
             "guided_learning": 0,
+            "whiteboard": 0,
         }
 
         for nb_info in notebooks:

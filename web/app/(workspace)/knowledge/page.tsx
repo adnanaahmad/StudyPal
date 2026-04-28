@@ -16,6 +16,7 @@ import {
   Loader2,
   MessageSquare,
   NotebookPen,
+  X,
   PenLine,
   Plus,
   Search,
@@ -127,6 +128,12 @@ const kbNeedsReindex = (kb: KnowledgeBase): boolean =>
 const kbIsUploadable = (kb: KnowledgeBase): boolean =>
   resolveKbStatus(kb) === "ready" && !kbNeedsReindex(kb);
 
+const isRenderableImageOutput = (output?: string): boolean =>
+  typeof output === "string" && output.startsWith("data:image/");
+
+const isSvgDataOutput = (output?: string): boolean =>
+  typeof output === "string" && output.startsWith("data:image/svg+xml");
+
 export default function KnowledgePage() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -150,6 +157,7 @@ export default function KnowledgePage() {
   const [selectedNotebook, setSelectedNotebook] = useState<NotebookDetail | null>(null);
   const [loadingNotebookDetail, setLoadingNotebookDetail] = useState(false);
   const [expandedRecordId, setExpandedRecordId] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ src: string; title: string } | null>(null);
   const [createProcess, setCreateProcess] = useState<ProcessState>(EMPTY_PROCESS_STATE);
   const [uploadProcess, setUploadProcess] = useState<ProcessState>(EMPTY_PROCESS_STATE);
   const socketsRef = useRef<Record<string, WebSocket>>({});
@@ -514,13 +522,27 @@ export default function KnowledgePage() {
 
   const openNotebookRecord = (record: NotebookRecord) => {
     const sessionId = String(record.metadata?.session_id || "");
-    if (!sessionId) return;
+    const whiteboardXml = String(record.metadata?.whiteboard_xml || "");
     if (record.type === "chat") {
+      if (!sessionId) return;
       router.push(`/?session=${encodeURIComponent(sessionId)}`);
       return;
     }
     if (record.type === "guided_learning") {
+      if (!sessionId) return;
       router.push(`/guide?session=${encodeURIComponent(sessionId)}`);
+      return;
+    }
+    if (record.type === "whiteboard") {
+      if (!sessionId && !whiteboardXml) return;
+      if (typeof window !== "undefined" && whiteboardXml) {
+        window.sessionStorage.setItem("deeptutor:whiteboard-import-xml", whiteboardXml);
+      }
+      const query = new URLSearchParams();
+      if (sessionId) query.set("session", sessionId);
+      if (whiteboardXml) query.set("from_notebook", "1");
+      const href = query.toString() ? `/whiteboard?${query.toString()}` : "/whiteboard";
+      router.push(href);
     }
   };
 
@@ -1073,10 +1095,18 @@ export default function KnowledgePage() {
                           const BadgeIcon = badge.icon;
                           const expanded = expandedRecordId === record.id;
                           const canOpenSession =
-                            (record.type === "chat" || record.type === "guided_learning") &&
-                            Boolean(record.metadata?.session_id);
+                            (
+                              record.type === "chat" ||
+                              record.type === "guided_learning" ||
+                              record.type === "whiteboard"
+                            ) &&
+                            Boolean(record.metadata?.session_id || record.metadata?.whiteboard_xml);
                           const sessionLabel =
-                            record.type === "chat" ? t("Open chat session") : t("Open guided learning session");
+                            record.type === "chat"
+                              ? t("Open chat session")
+                              : record.type === "guided_learning"
+                                ? t("Open guided learning session")
+                                : t("Open whiteboard session");
 
                           return (
                             <div key={record.id} className="group">
@@ -1127,11 +1157,44 @@ export default function KnowledgePage() {
                                   )}
 
                                   <div className="max-h-[320px] overflow-y-auto rounded-lg border border-[var(--border)] bg-[var(--muted)]/30 p-3">
-                                    <MarkdownRenderer
-                                      content={record.output || ""}
-                                      variant="prose"
-                                      className="text-[12px] leading-5 text-[var(--foreground)]"
-                                    />
+                                    {isRenderableImageOutput(record.output) ? (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setPreviewImage({
+                                            src: record.output,
+                                            title: record.title || t("Notebook diagram"),
+                                          })
+                                        }
+                                        className="block w-full rounded-lg text-left transition-opacity hover:opacity-95"
+                                      >
+                                        <div className="flex min-h-[280px] items-center justify-center rounded-lg border border-[var(--border)] bg-white p-4">
+                                          {isSvgDataOutput(record.output) ? (
+                                            <iframe
+                                              src={record.output}
+                                              title={record.title || "Notebook diagram"}
+                                              className="h-[420px] w-full rounded-md border-0 bg-white [filter:invert(1)_hue-rotate(180deg)]"
+                                            />
+                                          ) : (
+                                            <img
+                                              src={record.output}
+                                              alt={record.title || "Notebook diagram"}
+                                              loading="lazy"
+                                              className="max-h-[420px] max-w-full rounded-md object-contain"
+                                            />
+                                          )}
+                                        </div>
+                                        <div className="mt-2 text-center text-[11px] text-[var(--muted-foreground)]">
+                                          {t("Click to expand")}
+                                        </div>
+                                      </button>
+                                    ) : (
+                                      <MarkdownRenderer
+                                        content={record.output || ""}
+                                        variant="prose"
+                                        className="text-[12px] leading-5 text-[var(--foreground)]"
+                                      />
+                                    )}
                                   </div>
                                 </div>
                               )}
@@ -1155,6 +1218,45 @@ export default function KnowledgePage() {
                 </div>
               </div>
             </section>
+            {previewImage && (
+              <div
+                className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/75 p-6 backdrop-blur-sm"
+                onClick={() => setPreviewImage(null)}
+              >
+                <div
+                  className="relative flex max-h-[90vh] w-full max-w-6xl flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {previewImage.title}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewImage(null)}
+                      className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto bg-slate-50 p-6 dark:bg-slate-950">
+                    {isSvgDataOutput(previewImage.src) ? (
+                      <iframe
+                        src={previewImage.src}
+                        title={previewImage.title}
+                        className="h-full min-h-[70vh] w-full rounded-xl border-0 bg-white [filter:invert(1)_hue-rotate(180deg)]"
+                      />
+                    ) : (
+                      <img
+                        src={previewImage.src}
+                        alt={previewImage.title}
+                        className="max-h-full max-w-full rounded-xl border border-[var(--border)] bg-white object-contain"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

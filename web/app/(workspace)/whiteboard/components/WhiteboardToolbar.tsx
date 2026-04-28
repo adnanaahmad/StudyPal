@@ -19,14 +19,13 @@ export function WhiteboardToolbar({ onSaveToNotebook, onExport }: WhiteboardTool
       <div className="flex items-center gap-2">
         <button
           onClick={onSaveToNotebook}
-          className="flex items-center gap-1.5 rounded-lg bg-[var(--background)] px-3 py-1.5 text-[12px] text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]"
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--background)] px-3 py-1.5 text-[12px] border border-[var(--border)] text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]"
         >
-          <Save size={13} />
           {t("whiteboard.saveToNotebook")}
         </button>
         <button
           onClick={onExport}
-          className="flex items-center gap-1.5 rounded-lg bg-[var(--background)] px-3 py-1.5 text-[12px] text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]"
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] px-3 py-1.5 text-[12px] text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]"
         >
           <Download size={13} />
           {t("whiteboard.export")}

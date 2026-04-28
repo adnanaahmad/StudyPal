@@ -15,10 +15,28 @@ const SaveToNotebookModal = dynamic(
   { ssr: false },
 );
 
+interface WhiteboardMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+function buildWhiteboardConversation(messages: WhiteboardMessage[]): string {
+  const filtered = messages.filter(
+    (msg) =>
+      msg.content.trim() &&
+      !(msg.role === "assistant" && msg.content.toLowerCase().includes("welcome")),
+  );
+  return filtered
+    .slice(-20)
+    .map((msg) => `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content.trim()}`)
+    .join("\n");
+}
+
 export default function WhiteboardPage() {
   const { selectedSessionId } = useUnifiedChat();
   const pendingXmlRef = useRef<string | null>(null);
   const [notebookPayload, setNotebookPayload] = useState<NotebookSavePayload | null>(null);
+  const [panelMessages, setPanelMessages] = useState<WhiteboardMessage[]>([]);
 
   const { initialXml, saveXml, saveStatus } = useWhiteboardSession(selectedSessionId);
   const initialXmlRef = useRef<string | null>(null);
@@ -76,14 +94,21 @@ export default function WhiteboardPage() {
   );
 
   const handleSaveToNotebook = useCallback(() => {
+    const conversation = buildWhiteboardConversation(panelMessages);
+    const latestUserMessage = [...panelMessages].reverse().find((msg) => msg.role === "user")?.content ?? "";
     setNotebookPayload({
       recordType: "whiteboard",
       title: "Whiteboard Diagram",
-      userQuery: "",
+      userQuery: latestUserMessage,
       output: "",
+      metadata: conversation
+        ? {
+            summary_source: conversation,
+          }
+        : {},
     });
     exportSvg();
-  }, [exportSvg]);
+  }, [exportSvg, panelMessages]);
 
   const handleExportDownload = useCallback(() => {
     getXml();
@@ -102,6 +127,7 @@ export default function WhiteboardPage() {
           getCurrentXml={getXml}
           onXmlGenerated={handleXmlGenerated}
           pendingXmlRef={pendingXmlRef}
+          onMessagesChange={setPanelMessages}
         />
       </div>
       <SaveToNotebookModal

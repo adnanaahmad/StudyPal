@@ -147,6 +147,10 @@ class NotebookSummarizeAgent:
                 "zh": "一段引导式学习记录，重点提炼学习主题、知识点结构与阶段性产出。",
                 "en": "A guided learning record; focus on topic, knowledge structure, and partial/final output.",
             },
+            "whiteboard": {
+                "zh": "一张白板图或流程图，重点提炼图的主题、关键节点关系和用途。",
+                "en": "A whiteboard diagram; focus on the topic, key nodes/relationships, and intended use.",
+            },
         }
         localized = hints.get(record_type, {})
         return localized.get(self.language, "Summarize the most reusable information in this record.")
