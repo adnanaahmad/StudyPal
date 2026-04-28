@@ -99,7 +99,7 @@ async def generate_diagram(request: GenerateRequest) -> GenerateResponse:
     store = get_sqlite_session_store()
     
     # Resolve valid session (create one if missing)
-    session = await store.ensure_session(request.session_id)
+    session = await store.ensure_session(request.session_id, session_type="whiteboard")
     session_id = session["id"]
     
     # 1. Load context if current_xml is missing

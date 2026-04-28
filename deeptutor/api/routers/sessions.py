@@ -50,9 +50,12 @@ def _format_quiz_results_message(answers: list[QuizResultItem]) -> str:
 async def list_sessions(
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    session_type: str | None = Query(default="chat", alias="type"),
 ):
     store = get_sqlite_session_store()
-    sessions = await store.list_sessions(limit=limit, offset=offset)
+    sessions = await store.list_sessions(
+        limit=limit, offset=offset, session_type=session_type
+    )
     return {"sessions": sessions}
 
 

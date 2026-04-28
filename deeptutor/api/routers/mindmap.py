@@ -94,7 +94,7 @@ async def generate_mindmap(request: GenerateRequest) -> GenerateResponse:
     store = get_sqlite_session_store()
 
     # Resolve / create session
-    session = await store.ensure_session(request.session_id)
+    session = await store.ensure_session(request.session_id, session_type="mindmap")
     session_id = session["id"]
 
     # Build user message

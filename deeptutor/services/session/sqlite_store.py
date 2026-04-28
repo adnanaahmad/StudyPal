@@ -88,6 +88,7 @@ class SQLiteSessionStore:
                 CREATE TABLE IF NOT EXISTS sessions (
                     id TEXT PRIMARY KEY,
                     title TEXT NOT NULL DEFAULT 'New conversation',
+                    type TEXT NOT NULL DEFAULT 'chat',
                     created_at REAL NOT NULL,
                     updated_at REAL NOT NULL,
                     compressed_summary TEXT DEFAULT '',
@@ -152,6 +153,10 @@ class SQLiteSessionStore:
                 conn.execute(
                     "ALTER TABLE sessions ADD COLUMN preferences_json TEXT DEFAULT '{}'"
                 )
+            if "type" not in columns:
+                conn.execute(
+                    "ALTER TABLE sessions ADD COLUMN type TEXT NOT NULL DEFAULT 'chat'"
+                )
             conn.commit()
 
     async def _run(self, fn, *args):
@@ -164,31 +169,42 @@ class SQLiteSessionStore:
         conn.execute("PRAGMA foreign_keys = ON")
         return conn
 
-    def _create_session_sync(self, title: str | None = None, session_id: str | None = None) -> dict[str, Any]:
+    def _create_session_sync(
+        self,
+        title: str | None = None,
+        session_id: str | None = None,
+        session_type: str = "chat",
+    ) -> dict[str, Any]:
         now = time.time()
         resolved_id = session_id or f"unified_{int(now * 1000)}_{uuid.uuid4().hex[:8]}"
         resolved_title = (title or "New conversation").strip() or "New conversation"
         with self._connect() as conn:
             conn.execute(
                 """
-                INSERT INTO sessions (id, title, created_at, updated_at, compressed_summary, summary_up_to_msg_id)
-                VALUES (?, ?, ?, ?, '', 0)
+                INSERT INTO sessions (id, title, type, created_at, updated_at, compressed_summary, summary_up_to_msg_id)
+                VALUES (?, ?, ?, ?, ?, '', 0)
                 """,
-                (resolved_id, resolved_title[:100], now, now),
+                (resolved_id, resolved_title[:100], session_type, now, now),
             )
             conn.commit()
         return {
             "id": resolved_id,
             "session_id": resolved_id,
             "title": resolved_title[:100],
+            "type": session_type,
             "created_at": now,
             "updated_at": now,
             "compressed_summary": "",
             "summary_up_to_msg_id": 0,
         }
 
-    async def create_session(self, title: str | None = None, session_id: str | None = None) -> dict[str, Any]:
-        return await self._run(self._create_session_sync, title, session_id)
+    async def create_session(
+        self,
+        title: str | None = None,
+        session_id: str | None = None,
+        session_type: str = "chat",
+    ) -> dict[str, Any]:
+        return await self._run(self._create_session_sync, title, session_id, session_type)
 
     def _get_session_sync(self, session_id: str) -> dict[str, Any] | None:
         with self._connect() as conn:
@@ -197,6 +213,7 @@ class SQLiteSessionStore:
                 SELECT
                     s.id,
                     s.title,
+                    s.type,
                     s.created_at,
                     s.updated_at,
                     s.compressed_summary,
@@ -248,12 +265,16 @@ class SQLiteSessionStore:
     async def get_session(self, session_id: str) -> dict[str, Any] | None:
         return await self._run(self._get_session_sync, session_id)
 
-    async def ensure_session(self, session_id: str | None = None) -> dict[str, Any]:
+    async def ensure_session(
+        self,
+        session_id: str | None = None,
+        session_type: str = "chat",
+    ) -> dict[str, Any]:
         if session_id:
             session = await self.get_session(session_id)
             if session is not None:
                 return session
-        return await self.create_session()
+        return await self.create_session(session_type=session_type)
 
     @staticmethod
     def _serialize_turn(row: sqlite3.Row) -> dict[str, Any]:
@@ -608,13 +629,24 @@ class SQLiteSessionStore:
     async def get_messages_for_context(self, session_id: str) -> list[dict[str, Any]]:
         return await self._run(self._get_messages_for_context_sync, session_id)
 
-    def _list_sessions_sync(self, limit: int = 50, offset: int = 0) -> list[dict[str, Any]]:
+    def _list_sessions_sync(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+        session_type: str | None = "chat",
+    ) -> list[dict[str, Any]]:
         with self._connect() as conn:
-            rows = conn.execute(
-                """
+            where_clause = ""
+            params: list[Any] = [limit, offset]
+            if session_type:
+                where_clause = "WHERE s.type = ?"
+                params = [session_type, limit, offset]
+
+            query = f"""
                 SELECT
                     s.id,
                     s.title,
+                    s.type,
                     s.created_at,
                     s.updated_at,
                     s.compressed_summary,
@@ -664,12 +696,12 @@ class SQLiteSessionStore:
                     ) AS last_message
                 FROM sessions s
                 LEFT JOIN messages m ON m.session_id = s.id
+                {where_clause}
                 GROUP BY s.id
                 ORDER BY s.updated_at DESC
                 LIMIT ? OFFSET ?
-                """,
-                (limit, offset),
-            ).fetchall()
+                """
+            rows = conn.execute(query, params).fetchall()
         sessions = []
         for row in rows:
             payload = dict(row)
@@ -678,8 +710,13 @@ class SQLiteSessionStore:
             sessions.append(payload)
         return sessions
 
-    async def list_sessions(self, limit: int = 50, offset: int = 0) -> list[dict[str, Any]]:
-        return await self._run(self._list_sessions_sync, limit, offset)
+    async def list_sessions(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+        session_type: str | None = "chat",
+    ) -> list[dict[str, Any]]:
+        return await self._run(self._list_sessions_sync, limit, offset, session_type)
 
     def _update_summary_sync(self, session_id: str, summary: str, up_to_msg_id: int) -> bool:
         with self._connect() as conn:
