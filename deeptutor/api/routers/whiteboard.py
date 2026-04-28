@@ -121,7 +121,7 @@ async def generate_diagram(request: GenerateRequest) -> GenerateResponse:
 
     client = get_llm_client()
     # Use larger token limit for JSON, though it's more compact
-    raw = await client.complete(prompt=user_message, system_prompt=SYSTEM_PROMPT, max_tokens=2048)
+    raw = await client.complete(prompt=user_message, system_prompt=SYSTEM_PROMPT, max_tokens=4096)
 
     # Clean up and repair JSON
     json_text = raw.strip()
@@ -149,17 +149,38 @@ async def generate_diagram(request: GenerateRequest) -> GenerateResponse:
 
 
 def _generate_mxgraph_xml(graph: LogicalGraph) -> str:
-    """Convert logical graph into mxGraph XML with automatic grid layout."""
+    """Convert logical graph into mxGraph XML with automatic circular layout to prevent overlap."""
     # Settings
     node_w, node_h = 140, 70
-    h_gap, v_gap = 100, 150
-    start_x, start_y = 100, 100
-
+    
     num_nodes = len(graph.nodes)
     if num_nodes == 0:
         return '<mxGraphModel><root><mxCell id="0"/><mxCell id="1" parent="0"/></root></mxGraphModel>'
 
-    cols = math.ceil(math.sqrt(num_nodes))
+    # Semantic Architecture Layout (Heuristic Tiering)
+    level_nodes = {0: [], 1: [], 2: [], 3: []}
+    node_levels = {}
+    
+    for node in graph.nodes:
+        lbl = node.label.lower()
+        typ = node.type.lower()
+        
+        assigned_level = 1
+        if "gateway" in lbl or "client" in lbl or "frontend" in lbl or "ui" in lbl or "user" == lbl:
+            assigned_level = 0
+        elif "db" in lbl or "database" in lbl or "store" in lbl or "cache" in lbl or "db" in typ or "database" in typ:
+            assigned_level = 2
+        elif "saga" in lbl or "coordinator" in lbl or "broker" in lbl or "queue" in lbl or "kafka" in lbl or "event" in lbl:
+            assigned_level = 3
+            
+        level_nodes[assigned_level].append(node)
+        node_levels[node.id] = assigned_level
+
+    # Remove empty levels and sort them conceptually
+    active_levels = [lvl for lvl in [0, 1, 2, 3] if level_nodes[lvl]]
+    
+    h_gap, v_gap = 140, 180
+    start_y = 100
     
     # ID mapping (LLM IDs to internal numeric strings for safety)
     id_map: dict[str, str] = {}
@@ -170,7 +191,7 @@ def _generate_mxgraph_xml(graph: LogicalGraph) -> str:
         "rectangle": "rounded=1;whiteSpace=wrap;html=1;",
         "ellipse": "ellipse;whiteSpace=wrap;html=1;",
         "cloud": "ellipse;shape=cloud;whiteSpace=wrap;html=1;",
-        "database": "shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;",
+        "database": "shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;",
     }
 
     cells = [
@@ -178,34 +199,51 @@ def _generate_mxgraph_xml(graph: LogicalGraph) -> str:
         '<mxCell id="1" parent="0"/>'
     ]
 
-    for i, node in enumerate(graph.nodes):
-        row = i // cols
-        col = i % cols
-        x = start_x + (col * (node_w + h_gap))
-        y = start_y + (row * (node_h + v_gap))
+    for level in active_levels:
+        nodes = level_nodes[level]
         
-        internal_id = str(next_id)
-        id_map[node.id] = internal_id
-        next_id += 1
+        # If a tier has many nodes, break it into sub-rows of max 5 columns
+        max_cols = 5
+        sub_rows = [nodes[i:i + max_cols] for i in range(0, len(nodes), max_cols)]
         
-        # Fuzzy match style
-        ntype = node.type.lower()
-        nlabel = node.label.lower()
-        if "cloud" in ntype or "cloud" in nlabel:
-            style = styles["cloud"]
-        elif "db" in ntype or "database" in ntype or "cylinder" in ntype or "db" in nlabel or "database" in nlabel:
-            style = styles["database"]
-        elif "ellipse" in ntype or "circle" in ntype or "user" in nlabel or "actor" in nlabel:
-            style = styles["ellipse"]
-        else:
-            style = styles["rectangle"]
-        value = _escape_xml(node.label)
-        
-        cells.append(
-            f'<mxCell id="{internal_id}" value="{value}" style="{style}" vertex="1" parent="1">'
-            f'<mxGeometry x="{x}" y="{y}" width="{node_w}" height="{node_h}" as="geometry"/>'
-            '</mxCell>'
-        )
+        for sub_nodes in sub_rows:
+            # Center the row horizontally assuming a virtual canvas width of ~1200
+            total_width = len(sub_nodes) * node_w + (len(sub_nodes) - 1) * h_gap
+            current_x = max(100, (1200 - total_width) / 2)
+            
+            for i, node in enumerate(sub_nodes):
+                # Vertical jitter prevents horizontal edges within the same tier from slicing through nodes
+                y_jitter = 40 if i % 2 == 1 else 0
+                
+                x = current_x
+                y = start_y + y_jitter
+                current_x += node_w + h_gap
+                
+                internal_id = str(next_id)
+                id_map[node.id] = internal_id
+                next_id += 1
+            
+                # Fuzzy match style
+                ntype = node.type.lower()
+                nlabel = node.label.lower()
+                if "cloud" in ntype or "cloud" in nlabel:
+                    style = styles["cloud"]
+                elif "db" in ntype or "database" in ntype or "cylinder" in ntype or "db" in nlabel or "database" in nlabel:
+                    style = styles["database"]
+                elif "ellipse" in ntype or "circle" in ntype or "user" in nlabel or "actor" in nlabel:
+                    style = styles["ellipse"]
+                else:
+                    style = styles["rectangle"]
+                value = _escape_xml(node.label)
+                
+                cells.append(
+                    f'<mxCell id="{internal_id}" value="{value}" style="{style}" vertex="1" parent="1">'
+                    f'<mxGeometry x="{x}" y="{y}" width="{node_w}" height="{node_h}" as="geometry"/>'
+                    '</mxCell>'
+                )
+            
+            # Advance Y position for the next sub-row or tier
+            start_y += node_h + v_gap
 
     for edge in graph.edges:
         source_id = id_map.get(edge.source)
@@ -217,8 +255,22 @@ def _generate_mxgraph_xml(graph: LogicalGraph) -> str:
         next_id += 1
         value = _escape_xml(edge.label)
         
+        # Determine port routing based on tier difference
+        src_level = node_levels.get(edge.source, 1)
+        tgt_level = node_levels.get(edge.target, 1)
+        
+        port_style = ""
+        if src_level < tgt_level:
+            # Flowing down: exit bottom, enter top
+            port_style = "exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;"
+        elif src_level > tgt_level:
+            # Flowing up: exit top, enter bottom
+            port_style = "exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;"
+        
+        # Add labelBackgroundColor to prevent the line from crossing out the text
+        # Use rounded=1 for smoother routing
         cells.append(
-            f'<mxCell id="{edge_id}" value="{value}" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="{source_id}" target="{target_id}">'
+            f'<mxCell id="{edge_id}" value="{value}" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;labelBackgroundColor=#ffffff;{port_style}" edge="1" parent="1" source="{source_id}" target="{target_id}">'
             f'<mxGeometry relative="1" as="geometry"/>'
             '</mxCell>'
         )
