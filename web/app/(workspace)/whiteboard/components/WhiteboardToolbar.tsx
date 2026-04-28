@@ -23,13 +23,6 @@ export function WhiteboardToolbar({ onSaveToNotebook, onExport }: WhiteboardTool
         >
           {t("whiteboard.saveToNotebook")}
         </button>
-        <button
-          onClick={onExport}
-          className="flex items-center gap-1.5 rounded-lg bg-[var(--background)] border border-[var(--border)] px-3 py-1.5 text-[12px] text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]"
-        >
-          <Download size={13} />
-          {t("whiteboard.export")}
-        </button>
       </div>
     </div>
   );
