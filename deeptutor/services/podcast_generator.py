@@ -29,17 +29,21 @@ You are an expert podcast scriptwriter.
 Your task is to convert the user's study materials or topic into a conversational, engaging, and educational podcast script between two AI hosts: Host A (Sarah) and Host B (Alex).
 
 RULES:
-1. Output MUST be valid JSON containing a single array of dialogue objects.
+1. Output MUST be a valid JSON object containing a single key "script" which holds an array of dialogue objects.
 2. Each dialogue object MUST have exactly these keys: "speaker" (either "Sarah" or "Alex"), and "text" (the spoken line).
 3. Keep the conversation dynamic, debate-style, and engaging. Avoid overly long monologues (max 3-4 sentences per turn).
-4. CRITICAL: Provide a COMPREHENSIVE and IN-DEPTH discussion. The script MUST contain AT LEAST 15 to 25 dialogue turns back and forth. Do NOT just write an intro; write the full podcast episode exploring the nuances of the topic.
-5. Do not include markdown formatting or extra text outside the JSON array.
+4. CRITICAL LENGTH REQUIREMENT: You MUST generate a long, comprehensive discussion containing AT LEAST 15 to 25 dialogue turns. Do NOT cut the conversation short. 
+5. Write the full podcast episode exploring the nuances of the topic from the introduction, through the deep dive, to the conclusion.
 
 EXAMPLE OUTPUT:
-[
-  {"speaker": "Sarah", "text": "Welcome to the Audio Overview! Today we're diving into Quantum Mechanics."},
-  {"speaker": "Alex", "text": "That's right, Sarah. And it's not just theory—it changes how we see reality itself."}
-]
+{
+  "script": [
+    {"speaker": "Sarah", "text": "Welcome to the Audio Overview! Today we're diving into the fascinating world of Phases."},
+    {"speaker": "Alex", "text": "That's right, Sarah. And it's not just theory—it changes how we see reality itself."},
+    {"speaker": "Sarah", "text": "Exactly. Let's start with the basics. What exactly do we mean when we talk about a phase?"},
+    {"speaker": "Alex", "text": "Well, in physics, a phase is a distinct and homogeneous state of a system with no visible boundary separating it into parts."}
+  ]
+}
 """
 
 class PodcastGenerator:
@@ -74,7 +78,7 @@ class PodcastGenerator:
             raw_script = await llm_client.complete(
                 prompt=user_message,
                 system_prompt=PODCAST_SYSTEM_PROMPT,
-                max_tokens=2048,
+                max_tokens=4096,
                 response_format={"type": "json_object"} if hasattr(llm_client, "is_openai") else None
             )
             
@@ -85,7 +89,8 @@ class PodcastGenerator:
             elif raw_script.startswith("```"):
                 raw_script = raw_script[3:-3].strip()
                 
-            script = json.loads(raw_script)
+            import json_repair
+            script = json_repair.loads(raw_script)
             if isinstance(script, dict) and "script" in script:
                 script = script["script"]
                 
@@ -123,23 +128,42 @@ class PodcastGenerator:
     async def _synthesize_audio(self, script: list[dict[str, Any]], output_path: str) -> tuple[float, list[dict[str, Any]]]:
         """Synthesize audio chunks and stitch them. Returns total duration in seconds and updated script."""
         if not KOKORO_AVAILABLE or self.pipeline is None:
-            # MOCK SYNTHESIS: Generate a fake blank WAV file if Kokoro fails
+            # MOCK SYNTHESIS: Generate a fake tone WAV file if Kokoro fails
             logger.info("Using mock audio synthesis.")
             import wave
             import struct
+            import math
+            
+            # Better Mock: 3 seconds per dialogue
+            duration_per_line = 3.0
+            total_duration = max(len(script), 1) * duration_per_line
+            sample_rate = 24000
+            
+            # Generate a soft 440Hz tone chunk for one line to avoid silent output
+            audio_data = []
+            for i in range(int(sample_rate * duration_per_line)):
+                value = int(2000 * math.sin(2 * math.pi * 440 * i / sample_rate))
+                audio_data.append(struct.pack('h', value))
+            chunk = b''.join(audio_data)
+            
             with wave.open(output_path, 'w') as wav_file:
                 wav_file.setnchannels(1)
                 wav_file.setsampwidth(2)
-                wav_file.setframerate(24000)
-                # 5 seconds of silence
-                for _ in range(24000 * 5):
-                    wav_file.writeframes(struct.pack('h', 0))
+                wav_file.setframerate(sample_rate)
+                for _ in range(max(len(script), 1)):
+                    wav_file.writeframes(chunk)
                     
-            for idx, line in enumerate(script):
-                line["timestamp"] = idx * (5.0 / max(len(script), 1))
-                line["end_time"] = (idx + 1) * (5.0 / max(len(script), 1))
+            current_time = 0.0
+            updated_script = []
+            for line in script:
+                if not isinstance(line, dict):
+                    continue
+                line["timestamp"] = current_time
+                line["end_time"] = current_time + duration_per_line
+                current_time += duration_per_line
+                updated_script.append(line)
                 
-            return 5.0, script
+            return total_duration, updated_script
             
         # REAL KOKORO SYNTHESIS
         import soundfile as sf
@@ -160,6 +184,9 @@ class PodcastGenerator:
             updated_script = []
             
             for line in script:
+                if not isinstance(line, dict):
+                    continue
+                    
                 speaker = line.get("speaker", "Sarah")
                 text = line.get("text", "")
                 if not text:
@@ -167,22 +194,27 @@ class PodcastGenerator:
                     
                 voice = voices.get(speaker, "af_bella")
                 
-                # generate yields chunks: graphemes, phonemes, audio
-                generator = self.pipeline(text, voice=voice, speed=1.0)
-                line_audio = []
-                for _, _, audio_chunk in generator:
-                    line_audio.append(audio_chunk)
-                    all_audio.append(audio_chunk)
-                    
-                if line_audio:
-                    line_dur = len(np.concatenate(line_audio)) / sample_rate
-                else:
+                try:
+                    # generate yields chunks: graphemes, phonemes, audio
+                    generator = self.pipeline(text, voice=voice, speed=1.0)
+                    line_audio = []
+                    for _, _, audio_chunk in generator:
+                        line_audio.append(audio_chunk)
+                        all_audio.append(audio_chunk)
+                        
+                    if line_audio:
+                        line_dur = len(np.concatenate(line_audio)) / sample_rate
+                    else:
+                        line_dur = 0.0
+                except Exception as e:
+                    logger.error(f"Failed to synthesize line '{text[:20]}': {e}")
                     line_dur = 0.0
                     
-                line["timestamp"] = current_time
-                line["end_time"] = current_time + line_dur
-                current_time += line_dur
-                updated_script.append(line)
+                if line_dur > 0:
+                    line["timestamp"] = current_time
+                    line["end_time"] = current_time + line_dur
+                    current_time += line_dur
+                    updated_script.append(line)
                     
             if all_audio:
                 combined = np.concatenate(all_audio)
