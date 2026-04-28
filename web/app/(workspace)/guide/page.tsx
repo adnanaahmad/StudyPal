@@ -171,56 +171,69 @@ export default function GuidePage() {
         }}
       >
         {isIdle ? (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
-            <div className="p-3 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
-              <h2 className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden transition-all duration-500 hover:shadow-2xl">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-700 bg-gradient-to-br from-slate-50 to-white dark:from-slate-800 dark:to-slate-900">
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-xl">
+                  <Sparkles className="w-6 h-6 text-primary" />
+                </div>
                 {t("Describe what you want to learn")}
               </h2>
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-3 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
                 {t(
                   "Write a short learning request, and the system will design a progressive guided learning plan for you.",
                 )}
               </p>
             </div>
 
-            <div className="p-4 space-y-4">
-              <textarea
-                value={topicInput}
-                onChange={(e) => setTopicInput(e.target.value)}
-                placeholder={t(
-                  "For example: Teach me linear algebra from the basics, with intuition, key formulas, and common mistakes.",
-                )}
-                rows={8}
-                className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:ring-primary/40"
-              />
+            <div className="p-6 space-y-6">
+              <div className="relative group">
+                <textarea
+                  value={topicInput}
+                  onChange={(e) => setTopicInput(e.target.value)}
+                  placeholder={t(
+                    "For example: Teach me linear algebra from the basics, with intuition, key formulas, and common mistakes.",
+                  )}
+                  rows={6}
+                  className="w-full resize-none rounded-2xl border-2 border-slate-100 bg-slate-50/30 px-5 py-4 text-sm text-slate-700 outline-none transition-all duration-300 focus:border-primary/50 focus:bg-white focus:ring-4 focus:ring-primary/10 dark:border-slate-700 dark:bg-slate-900/50 dark:text-slate-100 dark:focus:ring-primary/20"
+                />
+                <div className="absolute bottom-4 right-4 text-[10px] text-slate-400 font-medium opacity-0 group-focus-within:opacity-100 transition-opacity">
+                  {topicInput.length} {t("characters")}
+                </div>
+              </div>
 
-              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/50">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                      {t("Notebook Context")}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 dark:border-slate-700 dark:bg-slate-900/30 backdrop-blur-sm transition-colors hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700">
+                      <BookOpen className="h-5 w-5 text-slate-400" />
                     </div>
-                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                      {t("Optionally ground the learning plan with saved notebook records.")}
-                    </p>
+                    <div>
+                      <div className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                        {t("Notebook Context")}
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                        {t("Ground the learning plan with your records")}
+                      </p>
+                    </div>
                   </div>
                   <button
                     onClick={() => setShowNotebookPicker(true)}
-                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800"
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:border-primary/30 active:scale-95 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-800"
                   >
-                    <BookOpen className="h-4 w-4" />
                     {t("Select Records")}
                   </button>
                 </div>
                 {notebookReferenceGroups.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-4 flex flex-wrap gap-2">
                     {notebookReferenceGroups.map((group) => (
                       <span
                         key={group.notebookId}
-                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                        className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-[10px] font-bold text-primary dark:border-primary/40 dark:bg-primary/20 dark:text-primary-foreground"
                       >
-                        {group.notebookName} ({group.count})
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                        {group.notebookName}
+                        <span className="opacity-60">({group.count})</span>
                       </span>
                     ))}
                   </div>
@@ -230,12 +243,12 @@ export default function GuidePage() {
               <button
                 onClick={handleCreateSession}
                 disabled={isLoading || !topicInput.trim()}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full inline-flex items-center justify-center gap-3 rounded-2xl bg-primary px-6 py-4 text-sm font-bold text-white shadow-lg shadow-primary/25 transition-all duration-300 hover:shadow-xl hover:opacity-95 hover:-translate-y-0.5 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none"
               >
                 {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-5 h-5" />
                 )}
                 {t("Generate learning plan")}
               </button>
@@ -286,46 +299,45 @@ export default function GuidePage() {
         style={{ width: `${rightWidthPercent}%` }}
       >
         {/* Collapse/Expand buttons */}
-        {isIdle && (
-          <div className="absolute top-4 left-4 z-20 flex gap-2">
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
-              title={
-                sidebarCollapsed ? t("Expand sidebar") : t("Collapse sidebar")
-              }
-            >
-              {sidebarCollapsed ? (
-                <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-              ) : (
-                <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-              )}
-            </button>
-            {!sidebarCollapsed && (
+        {isIdle ? (
+          <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden relative">
+            <div className="absolute top-4 left-4 z-20 flex gap-2">
               <button
-                onClick={() => setSidebarWide(!sidebarWide)}
-                className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                className="p-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-600 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
                 title={
-                  sidebarWide
-                    ? t("Switch to narrow sidebar (1:3)")
-                    : t("Switch to wide sidebar (3:1)")
+                  sidebarCollapsed ? t("Expand sidebar") : t("Collapse sidebar")
                 }
               >
-                <ArrowRight
-                  className={`w-4 h-4 text-slate-600 dark:text-slate-300 transition-transform ${sidebarWide ? "rotate-180" : ""}`}
-                />
+                {sidebarCollapsed ? (
+                  <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                ) : (
+                  <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-300" />
+                )}
               </button>
-            )}
-          </div>
-        )}
-
-        {isIdle ? (
-          <div className="flex-1 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
-            <SessionHistoryList
-              sessions={sessions}
-              loading={historyLoading}
-              onLoadSession={handleLoadSession}
-            />
+              {!sidebarCollapsed && (
+                <button
+                  onClick={() => setSidebarWide(!sidebarWide)}
+                  className="p-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-600 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                  title={
+                    sidebarWide
+                      ? t("Switch to narrow sidebar (1:3)")
+                      : t("Switch to wide sidebar (3:1)")
+                  }
+                >
+                  <ArrowRight
+                    className={`w-4 h-4 text-slate-600 dark:text-slate-300 transition-transform ${sidebarWide ? "rotate-180" : ""}`}
+                  />
+                </button>
+              )}
+            </div>
+            <div className="flex-1 overflow-hidden pt-14">
+              <SessionHistoryList
+                sessions={sessions}
+                loading={historyLoading}
+                onLoadSession={handleLoadSession}
+              />
+            </div>
           </div>
         ) : (
           <>
