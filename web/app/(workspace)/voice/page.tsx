@@ -2,22 +2,145 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ArrowLeft, Mic, MicOff, PhoneOff, Play } from "lucide-react";
+import { ArrowLeft, Mic, MicOff, PhoneOff, Play, Bot, Loader2, Signal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VocalBridgeProvider, useVocalBridge, useTranscript } from "@vocalbridgeai/react";
 import { ConnectionState } from "@vocalbridgeai/sdk";
 import { apiUrl } from "@/lib/api";
 
-/* ── Provider wrapper ── */
+/* ── Main Component ── */
 
 export default function VoicePage() {
+  const [isStarted, setIsStarted] = useState(false);
   const searchParams = useSearchParams();
   const botId = searchParams.get("bot_id");
 
-  return <VoicePageInner botId={botId} />;
+  return (
+    <AnimatePresence mode="wait">
+      {!isStarted ? (
+        <motion.div
+          key="start"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="h-full w-full"
+        >
+          <VoiceStart onStart={() => setIsStarted(true)} botId={botId} />
+        </motion.div>
+      ) : (
+        <motion.div
+          key="session"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="h-full w-full"
+        >
+          <VoicePageInner botId={botId} onEnd={() => setIsStarted(false)} />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
 }
 
-function VoicePageInner({ botId }: { botId: string | null }) {
+/* ── Start Screen ── */
+
+function VoiceStart({ onStart, botId }: { onStart: () => void; botId: string | null }) {
+  const router = useRouter();
+  const [botInfo, setBotInfo] = useState<{ name: string; description: string } | null>(null);
+  const [loading, setLoading] = useState(!!botId);
+
+  useEffect(() => {
+    if (!botId) return;
+    async function fetchBot() {
+      try {
+        const res = await fetch(apiUrl(`/api/v1/tutorbot/${botId}`));
+        if (res.ok) {
+          const data = await res.json();
+          setBotInfo({ name: data.name, description: data.description });
+        }
+      } catch (err) {
+        console.error("Failed to fetch bot info", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    void fetchBot();
+  }, [botId]);
+
+  return (
+    <div className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
+      {/* Background Decorative Elements */}
+      <div className="absolute inset-0 z-0 overflow-hidden opacity-30">
+        <div className="absolute -left-1/4 -top-1/4 h-[600px] w-[600px] rounded-full bg-primary/10 blur-[120px]" />
+        <div className="absolute -bottom-1/4 -right-1/4 h-[600px] w-[600px] rounded-full bg-blue-500/10 blur-[120px]" />
+      </div>
+
+      {/* Back Button */}
+      <div className="absolute left-6 top-6 z-10">
+        <button
+          onClick={() => router.back()}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--muted)]/50 text-[var(--muted-foreground)] backdrop-blur-md transition-all hover:bg-[var(--muted)] hover:text-[var(--foreground)] active:scale-95"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center max-w-md px-6 text-center">
+        {/* Visual Header */}
+        <div className="mb-12 relative">
+          <motion.div
+            animate={{
+              scale: [1, 1.1, 1],
+              opacity: [0.3, 0.6, 0.3],
+            }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="absolute inset-0 -m-8 rounded-full bg-primary/20 blur-2xl"
+          />
+          <div className="relative flex h-32 w-32 items-center justify-center rounded-full border border-white/20 bg-[var(--card)] shadow-2xl backdrop-blur-xl">
+             {loading ? (
+               <Loader2 className="h-12 w-12 text-primary animate-spin" />
+             ) : (
+               <Mic className="h-12 w-12 text-primary" />
+             )}
+          </div>
+          <div className="absolute -bottom-2 -right-2 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg">
+            <Signal className="h-4 w-4" />
+          </div>
+        </div>
+
+        {/* Content */}
+        <h1 className="mb-3 text-3xl font-bold tracking-tight">
+          {loading ? "Preparing..." : botInfo ? botInfo.name : "Voice Assistant"}
+        </h1>
+        <p className="mb-10 text-[var(--muted-foreground)] leading-relaxed">
+          {botInfo?.description || "Experience a natural, real-time conversation with your AI tutor. Speak freely and learn naturally."}
+        </p>
+
+        {/* Start Button */}
+        <button
+          onClick={onStart}
+          disabled={loading}
+          className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-primary py-4 px-8 text-lg font-semibold text-white shadow-xl transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
+        >
+          <Play className="h-5 w-5 fill-white transition-transform group-hover:scale-110" />
+          Start Session
+        </button>
+        
+        <p className="mt-6 text-[10px] uppercase tracking-widest text-[var(--muted-foreground)] opacity-50">
+          Powered by VocalBridge Real-time API
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Provider wrapper ── */
+
+function VoicePageInner({ botId, onEnd }: { botId: string | null; onEnd: () => void }) {
   const tokenUrl = useMemo(
     () => {
       const url = new URL(apiUrl("/api/v1/voice/token"), window.location.origin);
@@ -34,15 +157,14 @@ function VoicePageInner({ botId }: { botId: string | null }) {
 
   return (
     <VocalBridgeProvider options={options}>
-      <VoiceSession botId={botId} />
+      <VoiceSession botId={botId} onEnd={onEnd} />
     </VocalBridgeProvider>
   );
 }
 
 /* ── Session inner component ── */
 
-function VoiceSession({ botId }: { botId: string | null }) {
-  const router = useRouter();
+function VoiceSession({ botId, onEnd }: { botId: string | null; onEnd: () => void }) {
   const { state, connect, disconnect, toggleMicrophone, isMicrophoneEnabled, error } =
     useVocalBridge();
   const { transcript } = useTranscript();
@@ -88,32 +210,7 @@ function VoiceSession({ botId }: { botId: string | null }) {
   const handleEnd = async () => {
     console.log("[VocalBridge] Ending call...");
     await disconnect();
-    router.push("/agents");
-  };
-
-  const handleBack = async () => {
-    await disconnect();
-    router.back();
-  };
-
-  const handleConnect = async () => {
-    try {
-      console.log("[VocalBridge] Manual connect requested...");
-      // Check for mic permission first
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch (micErr) {
-        console.error("[VocalBridge] Mic permission denied or no mic found:", micErr);
-        return;
-      }
-      
-      if (state !== ConnectionState.Disconnected) {
-        await disconnect();
-      }
-      await connect();
-    } catch (e) {
-      console.error("[VocalBridge] Manual connect failed:", e);
-    }
+    onEnd();
   };
 
   const latestEntry = transcript[transcript.length - 1];
@@ -135,7 +232,7 @@ function VoiceSession({ botId }: { botId: string | null }) {
       {/* Header */}
       <div className="relative z-10 flex w-full items-center justify-between p-6">
         <button
-          onClick={handleBack}
+          onClick={handleEnd}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--muted)]/50 text-[var(--muted-foreground)] backdrop-blur-md transition-all hover:bg-[var(--muted)] hover:text-[var(--foreground)] active:scale-95"
         >
           <ArrowLeft className="h-5 w-5" />
@@ -334,11 +431,11 @@ function VoiceSession({ botId }: { botId: string | null }) {
         >
           {isDisconnected ? (
             <button
-               onClick={handleConnect}
+               onClick={connect}
                className="flex items-center gap-2 rounded-full bg-primary px-8 py-3 font-semibold text-white transition-all hover:brightness-110 active:scale-95 shadow-lg shadow-primary/20"
             >
               <Play className="h-4 w-4 fill-white" />
-              Start Conversation
+              Reconnect
             </button>
           ) : (
             <>
