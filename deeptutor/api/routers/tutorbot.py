@@ -119,65 +119,6 @@ async def create_and_start_bot(payload: CreateBotRequest):
     return instance.to_dict()
 
 
-@router.post("/{bot_id}/voice-token")
-async def get_voice_token(bot_id: str):
-    from deeptutor.config.settings import settings
-    from deeptutor.logging import get_logger
-
-    log = get_logger("TutorBot")
-    mgr = get_tutorbot_manager()
-    instance = mgr.get_bot(bot_id)
-    
-    if instance is None:
-        print(f"DEBUG: Bot '{bot_id}' not found or not running")
-        cfg = mgr._load_bot_config(bot_id)
-        if cfg is None:
-            raise HTTPException(status_code=404, detail="Bot not found")
-        raise HTTPException(status_code=409, detail=f"Bot '{bot_id}' is not running")
-
-    bot_name = instance.config.name
-    print(f"DEBUG: Requesting voice token for bot '{bot_id}' (name: '{bot_name}')")
-    log.info(f"Requesting voice token for bot '{bot_id}' (name: '{bot_name}')")
-
-    async with httpx.AsyncClient() as client:
-        try:
-            # Build headers: skip Agent-Id if it looks like an agent-scoped key prefix (optional but cleaner)
-            headers = {
-                "X-API-Key": settings.vocal_bridge_api_key,
-                "Content-Type": "application/json",
-            }
-            if settings.vocal_bridge_agent_id:
-                headers["X-Agent-Id"] = settings.vocal_bridge_agent_id
-
-            resp = await client.post(
-                "https://vocalbridgeai.com/api/v1/token",
-                headers=headers,
-                json={"participant_name": "User"},
-                timeout=10.0,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            
-            msg = f"DEBUG: Successfully obtained voice token for bot '{bot_id}'. Room: {data.get('room_name')}"
-            print(msg)
-            log.info(msg)
-        except httpx.HTTPStatusError as exc:
-            print(f"DEBUG: VocalBridge API error: {exc.response.status_code} - {exc.response.text}")
-            log.error(f"VocalBridge API error: {exc.response.status_code} - {exc.response.text}")
-            raise HTTPException(status_code=exc.response.status_code, detail=f"VocalBridge error: {exc.response.text}")
-        except Exception as exc:
-            print(f"DEBUG: Failed to get voice token: {str(exc)}")
-            log.error(f"Failed to get voice token: {str(exc)}")
-            raise HTTPException(status_code=500, detail="Failed to reach voice provider")
-
-    return {
-        "token": data["token"],
-        "livekit_url": data["livekit_url"],
-        "room_name": data["room_name"],
-        "expires_in": data.get("expires_in", 3600),
-    }
-
-
 @router.get("/{bot_id}")
 async def get_bot(bot_id: str):
     mgr = get_tutorbot_manager()

@@ -393,14 +393,6 @@ function BotsTab({
                       {t("Chat")}
                     </button>
                     <button
-                      type="button"
-                      onClick={() => router.push(`/agents/${bot.bot_id}/voice`)}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)]/50 px-3 py-1.5 text-[12px] font-medium text-[var(--muted-foreground)] transition-colors hover:border-[var(--border)] hover:text-[var(--foreground)]"
-                    >
-                      <Mic className="h-3 w-3" />
-                      {t("Voice")}
-                    </button>
-                    <button
                       onClick={() => stopBot(bot.bot_id)}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--border)]/50 px-3 py-1.5 text-[12px] font-medium text-red-400 transition-colors hover:border-red-400/50"
                     >

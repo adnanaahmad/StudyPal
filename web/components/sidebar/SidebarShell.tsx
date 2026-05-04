@@ -12,6 +12,7 @@ import {
   Headphones,
   ListChecks,
   MessageSquare,
+  Mic,
   Network,
   PanelLeftClose,
   PanelLeftOpen,
@@ -35,6 +36,7 @@ interface NavEntry {
 const PRIMARY_NAV: NavEntry[] = [
   { href: "/", label: "Chat", icon: MessageSquare },
   { href: "/agents", label: "TutorBot", icon: Bot },
+  { href: "/voice", label: "Voice", icon: Mic },
   { href: "/co-writer", label: "Co-Writer", icon: PenLine },
   { href: "/guide", label: "Guided Learning", icon: GraduationCap },
   { href: "/whiteboard", label: "Whiteboard", icon: PenSquare },

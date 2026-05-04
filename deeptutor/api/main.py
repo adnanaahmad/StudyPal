@@ -203,6 +203,7 @@ from deeptutor.api.routers import (
     tutorbot,
     unified_ws,
     vision_solver,
+    voice,
     whiteboard,
 )
 
@@ -226,6 +227,7 @@ app.include_router(tutorbot.router, prefix="/api/v1/tutorbot", tags=["tutorbot"]
 app.include_router(whiteboard.router, prefix="/api/v1/whiteboard", tags=["whiteboard"])
 app.include_router(mindmap.router, prefix="/api/v1/mindmap", tags=["mindmap"])
 app.include_router(podcasts.router, prefix="/api/v1/podcasts", tags=["podcasts"])
+app.include_router(voice.router, prefix="/api/v1/voice", tags=["voice"])
 
 # Unified WebSocket endpoint
 app.include_router(unified_ws.router, prefix="/api/v1", tags=["unified-ws"])

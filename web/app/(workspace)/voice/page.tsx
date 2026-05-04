@@ -1,32 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft, Mic, MicOff, PhoneOff, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VocalBridgeProvider, useVocalBridge, useTranscript } from "@vocalbridgeai/react";
-import { ConnectionState, VocalBridgeError } from "@vocalbridgeai/sdk";
+import { ConnectionState } from "@vocalbridgeai/sdk";
 import { apiUrl } from "@/lib/api";
 
 /* ── Provider wrapper ── */
 
 export default function VoicePage() {
-  const { botId } = useParams<{ botId: string }>();
-
-  if (!botId) {
-    return (
-      <div className="flex bg-[var(--background)] inset-0 fixed items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 border-[var(--primary)] border-t-transparent animate-spin" />
-      </div>
-    );
-  }
+  const searchParams = useSearchParams();
+  const botId = searchParams.get("bot_id");
 
   return <VoicePageInner botId={botId} />;
 }
 
-function VoicePageInner({ botId }: { botId: string }) {
+function VoicePageInner({ botId }: { botId: string | null }) {
   const tokenUrl = useMemo(
-    () => apiUrl(`/api/v1/tutorbot/${botId}/voice-token`),
+    () => {
+      const url = new URL(apiUrl("/api/v1/voice/token"), window.location.origin);
+      if (botId) url.searchParams.set("bot_id", botId);
+      return url.toString();
+    },
     [botId]
   );
 
@@ -44,7 +41,7 @@ function VoicePageInner({ botId }: { botId: string }) {
 
 /* ── Session inner component ── */
 
-function VoiceSession({ botId }: { botId: string }) {
+function VoiceSession({ botId }: { botId: string | null }) {
   const router = useRouter();
   const { state, connect, disconnect, toggleMicrophone, isMicrophoneEnabled, error } =
     useVocalBridge();
@@ -79,8 +76,6 @@ function VoiceSession({ botId }: { botId: string }) {
 
     return () => {
       active = false;
-      // We don't automatically disconnect here to avoid race conditions on hot-reload/strict-mode
-      // The provider handles cleanup if it unmounts permanently.
       connectingRef.current = false;
     };
   }, [connect, state]);
@@ -98,7 +93,7 @@ function VoiceSession({ botId }: { botId: string }) {
 
   const handleBack = async () => {
     await disconnect();
-    router.push("/agents");
+    router.back();
   };
 
   const handleConnect = async () => {
@@ -147,7 +142,7 @@ function VoiceSession({ botId }: { botId: string }) {
         </button>
         <div className="flex flex-col items-center">
           <h1 className="text-sm font-semibold tracking-tight text-[var(--foreground)]">
-            {botId.toUpperCase()}
+            {botId ? botId.toUpperCase() : "VOICE AGENT"}
           </h1>
           <div className="flex items-center gap-1.5">
             <div className={`h-1.5 w-1.5 rounded-full ${state === ConnectionState.Connected ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" : "bg-[var(--muted-foreground)]"}`} />
