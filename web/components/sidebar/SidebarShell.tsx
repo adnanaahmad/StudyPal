@@ -20,6 +20,7 @@ import {
   PenSquare,
   Plus,
   Settings,
+  Timer,
   type LucideIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -37,6 +38,7 @@ const PRIMARY_NAV: NavEntry[] = [
   { href: "/", label: "Chat", icon: MessageSquare },
   { href: "/agents", label: "TutorBot", icon: Bot },
   { href: "/voice", label: "Voice", icon: Mic },
+  { href: "/focus", label: "Focus", icon: Timer },
   { href: "/co-writer", label: "Co-Writer", icon: PenLine },
   { href: "/guide", label: "Guided Learning", icon: GraduationCap },
   { href: "/whiteboard", label: "Whiteboard", icon: PenSquare },
