@@ -25,7 +25,10 @@ def _build_messages(
     messages: list[dict[str, object]] | None,
 ) -> list[dict[str, object]]:
     if messages:
-        return messages
+        msg_list = list(messages)
+        if system_prompt and not any(m.get("role") == "system" for m in msg_list):
+            msg_list.insert(0, {"role": "system", "content": system_prompt})
+        return msg_list
     return [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": prompt},

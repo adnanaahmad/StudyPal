@@ -170,6 +170,7 @@ async def deconstruct_diagram(request: DeconstructRequest) -> GenerateResponse:
     system_prompt = SYSTEM_PROMPT + "\n\nTask: Analyze the provided image of a diagram (e.g. ERD, flowchart, architecture) and extract EVERY node and connection into the JSON format. Do not simplify; capture the full complexity of the diagram including table names, field names (if possible), and all relational arrows."
 
     messages = [
+        {"role": "system", "content": system_prompt},
         {
             "role": "user",
             "content": [

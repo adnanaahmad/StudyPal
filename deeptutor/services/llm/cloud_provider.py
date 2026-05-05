@@ -271,7 +271,9 @@ async def _openai_complete(
 
     # Use pre-built messages when provided; otherwise build from prompt/system_prompt
     if messages:
-        msg_list = messages
+        msg_list = list(messages)
+        if system_prompt and not any(m.get("role") == "system" for m in msg_list):
+            msg_list.insert(0, {"role": "system", "content": system_prompt})
     else:
         msg_list = [
             {"role": "system", "content": system_prompt},
@@ -391,7 +393,9 @@ async def _openai_stream(
 
     # Build messages
     if messages:
-        msg_list = messages
+        msg_list = list(messages)
+        if system_prompt and not any(m.get("role") == "system" for m in msg_list):
+            msg_list.insert(0, {"role": "system", "content": system_prompt})
     else:
         msg_list = [
             {"role": "system", "content": system_prompt},
