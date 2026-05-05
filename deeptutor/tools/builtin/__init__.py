@@ -9,6 +9,7 @@ from typing import Any
 
 from deeptutor.core.tool_protocol import BaseTool, ToolDefinition, ToolParameter, ToolResult
 from deeptutor.tools.prompting import load_prompt_hints
+from deeptutor.tools.vision.diagram_analyzer import DiagramAnalysisTool
 
 logger = logging.getLogger(__name__)
 
@@ -506,6 +507,7 @@ BUILTIN_TOOL_TYPES: tuple[type[BaseTool], ...] = (
     ReasonTool,
     PaperSearchToolWrapper,
     GeoGebraAnalysisTool,
+    DiagramAnalysisTool,
 )
 
 BUILTIN_TOOL_NAMES: tuple[str, ...] = tuple(tool_type().name for tool_type in BUILTIN_TOOL_TYPES)
@@ -525,6 +527,7 @@ __all__ = [
     "BrainstormTool",
     "CodeExecutionTool",
     "GeoGebraAnalysisTool",
+    "DiagramAnalysisTool",
     "PaperSearchToolWrapper",
     "RAGTool",
     "ReasonTool",

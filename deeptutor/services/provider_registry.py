@@ -251,6 +251,14 @@ PROVIDERS: tuple[ProviderSpec, ...] = (
         default_api_base="https://open.bigmodel.cn/api/paas/v4",
     ),
     ProviderSpec(
+        name="nvidia",
+        keywords=("nvidia", "nemotron"),
+        env_key="NVIDIA_API_KEY",
+        display_name="NVIDIA",
+        backend="openai_compat",
+        default_api_base="https://integrate.api.nvidia.com/v1",
+    ),
+    ProviderSpec(
         name="dashscope",
         keywords=("qwen", "dashscope"),
         env_key="DASHSCOPE_API_KEY",

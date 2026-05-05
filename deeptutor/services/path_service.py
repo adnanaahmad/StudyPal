@@ -150,6 +150,9 @@ class PathService:
         if len(parts) >= 1 and parts[0] == "podcasts":
             return True
 
+        if len(parts) >= 1 and parts[0] == "decks":
+            return True
+
         return False
 
     def get_workspace_dir(self) -> Path:
@@ -278,6 +281,9 @@ class PathService:
     def get_run_code_workspace_dir(self) -> Path:
         return self.get_chat_feature_dir("_detached_code_execution")
 
+    def get_decks_dir(self) -> Path:
+        return self.get_user_root() / "decks"
+
     def get_logs_dir(self) -> Path:
         return self.get_user_root() / "logs"
 
@@ -317,6 +323,7 @@ class PathService:
         self.ensure_memory_dir()
         self.ensure_notebook_dir()
         self.get_logs_dir().mkdir(parents=True, exist_ok=True)
+        self.get_decks_dir().mkdir(parents=True, exist_ok=True)
         for feature in ("co-writer", "guide"):
             self.get_workspace_feature_dir(feature).mkdir(parents=True, exist_ok=True)
         for feature in (

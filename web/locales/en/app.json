@@ -861,6 +861,7 @@
   "Delete this chat history?": "Delete this chat history?",
   "whiteboard.title": "Whiteboard",
   "whiteboard.saveToNotebook": "Save to Notebook",
+  "whiteboard.smartDeconstruct": "Smart Deconstruct",
   "whiteboard.export": "Export",
   "whiteboard.aiPanel.title": "AI Assistant",
   "whiteboard.aiPanel.placeholder": "Ask AI to draw or modify...",
@@ -930,5 +931,14 @@
   "exam.take.exitFullscreen": "Exit fullscreen",
   "exam.take.fullscreenHint": "For a real exam feel, switch to fullscreen before answering.",
   "exam.take.finishingTitle": "Finalizing your exam",
-  "exam.take.finishingBody": "Checking answers and preparing your result..."
+  "exam.take.finishingBody": "Checking answers and preparing your result...",
+  "decks.title": "Presentation Decks",
+  "decks.generate": "Generate Slide Deck",
+  "decks.topic": "Presentation Topic",
+  "decks.sourceMaterial": "Source Material (Optional)",
+  "decks.recent": "Recent Decks",
+  "decks.noDecks": "No decks yet",
+  "decks.generating": "Designing your slides...",
+  "decks.download": "Download",
+  "Decks": "Decks"
 }

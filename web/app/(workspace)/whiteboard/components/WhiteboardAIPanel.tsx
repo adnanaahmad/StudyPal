@@ -1,7 +1,7 @@
 "use client";
 
-import { ArrowUp, Loader2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { ArrowUp, Loader2, Paperclip } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { apiUrl } from "@/lib/api";
 
@@ -32,6 +32,7 @@ export function WhiteboardAIPanel({
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState(sessionId);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync with prop if it changes externally
   useEffect(() => {
@@ -78,6 +79,51 @@ export function WhiteboardAIPanel({
     }
   }, [input, loading, currentSessionId, getCurrentXml, onXmlGenerated, pendingXmlRef]);
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLoading(true);
+    setMessages((prev) => [...prev, { role: "user", content: "Uploaded a diagram for deconstruction." }]);
+
+    try {
+      // Wrap FileReader in a Promise so errors in the async callback are caught here
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target?.result as string);
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsDataURL(file);
+      });
+
+      const res = await fetch(apiUrl("/api/v1/whiteboard/deconstruct"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image_base64: base64,
+          session_id: currentSessionId,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        onXmlGenerated(data.xml);
+        setMessages((prev) => [...prev, { role: "assistant", content: "Diagram deconstructed successfully!" }]);
+      } else {
+        const err = await res.json().catch(() => ({ detail: "Failed to analyze diagram." }));
+        const msg = err?.detail ?? "Failed to analyze diagram.";
+        setMessages((prev) => [...prev, { role: "assistant", content: msg }]);
+      }
+    } catch (err) {
+      console.error(err);
+      setMessages((prev) => [...prev, { role: "assistant", content: "An error occurred during upload." }]);
+    } finally {
+      setLoading(false);
+      // Reset input so the same file can be re-uploaded
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+
   return (
     <div className="flex w-[320px] shrink-0 flex-col border-l border-[var(--border)] bg-[var(--background)]">
       <div className="flex h-10 shrink-0 items-center border-b border-[var(--border)] bg-[var(--secondary)] px-4">
@@ -109,6 +155,20 @@ export function WhiteboardAIPanel({
       <div className="border-t border-[var(--border)] p-3">
 
         <div className="flex items-end gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept="image/*"
+            onChange={handleFileUpload}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="rounded-lg p-2 text-[var(--muted-foreground)] hover:bg-[var(--secondary)]"
+            title="Upload diagram image"
+          >
+            <Paperclip size={18} />
+          </button>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}

@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useUnifiedChat } from "@/context/UnifiedChatContext";
+import { apiUrl } from "@/lib/api";
 import { DrawioCanvas } from "./components/DrawioCanvas";
 import { WhiteboardAIPanel } from "./components/WhiteboardAIPanel";
 import { WhiteboardToolbar } from "./components/WhiteboardToolbar";
@@ -37,6 +38,8 @@ export default function WhiteboardPage() {
   const pendingXmlRef = useRef<string | null>(null);
   const [notebookPayload, setNotebookPayload] = useState<NotebookSavePayload | null>(null);
   const [panelMessages, setPanelMessages] = useState<WhiteboardMessage[]>([]);
+  const [deconstructing, setDeconstructing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { initialXml, saveXml, saveStatus } = useWhiteboardSession(selectedSessionId);
   const initialXmlRef = useRef<string | null>(null);
@@ -56,6 +59,10 @@ export default function WhiteboardPage() {
       return;
     }
     if (format === "svg") {
+      if (!data) {
+        console.warn("SVG export returned empty data");
+        return;
+      }
       setNotebookPayload((prev) =>
         prev ? { ...prev, output: data } : null,
       );
@@ -114,11 +121,65 @@ export default function WhiteboardPage() {
     getXml();
   }, [getXml]);
 
+  const handleSmartDeconstruct = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setDeconstructing(true);
+    try {
+      // Wrap FileReader in a Promise so errors propagate to the outer try/catch
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target?.result as string);
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsDataURL(file);
+      });
+
+      const res = await fetch(apiUrl("/api/v1/whiteboard/deconstruct"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image_base64: base64,
+          session_id: selectedSessionId
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        handleXmlGenerated(data.xml);
+      } else {
+        const err = await res.json().catch(() => ({ detail: "Failed to analyze diagram." }));
+        alert(err?.detail ?? "Failed to analyze diagram.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred while reading the image.");
+    } finally {
+      setDeconstructing(false);
+      // Reset so the same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[var(--background)]">
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/*"
+        onChange={handleFileChange}
+      />
       <WhiteboardToolbar
         onSaveToNotebook={handleSaveToNotebook}
         onExport={handleExportDownload}
+        onSmartDeconstruct={handleSmartDeconstruct}
+        isDeconstructing={deconstructing}
       />
       <div className="flex flex-1 overflow-hidden">
         <DrawioCanvas iframeRef={iframeRef} saveStatus={saveStatus} />

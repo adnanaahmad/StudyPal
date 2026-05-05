@@ -3,21 +3,21 @@ import logging
 import math
 import re
 import xml.etree.ElementTree as ET
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from deeptutor.services.llm import get_llm_client
 from deeptutor.services.session.sqlite_store import get_sqlite_session_store
+from deeptutor.services.config import get_env_store
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-SYSTEM_PROMPT = """You are a diagram architecture assistant.
-Your goal is to provide a logical graph of nodes and edges in JSON format.
-I will convert this JSON to a draw.io diagram for you.
+SYSTEM_PROMPT = """You are a professional diagram architecture assistant and vision analyst.
+Your goal is to analyze diagrams (flowcharts, ERDs, system architectures) and represent them as a logical graph of nodes and edges in JSON format.
 
 JSON SCHEMA:
 {
@@ -29,16 +29,21 @@ JSON SCHEMA:
   ]
 }
 
+DECONSTRUCTION RULES:
+1. Capture EVERY visible element in the image. For ER diagrams, EVERY table and its primary name must be a node.
+2. Maintain the visual relationships. If A points to B in the image, create an edge from A to B.
+3. Be EXTREMELY precise with labels. Do not simplify "User Authentication Service" to "Auth".
+4. If the diagram is an ERD, use the 'database' type for tables.
+
 MODIFICATION RULES:
 1. If you receive a "Current Graph State", you MUST use it as your base context.
-2. If the user asks for a modification, return the ENTIRE updated graph, not just the changes.
-3. Keep IDs consistent with the current state unless deleting/replacing a node.
+2. Return the ENTIRE updated graph, not just the changes.
+3. Keep IDs consistent with the current state.
 
 GENERIC RULES:
-1. Output ONLY the valid JSON object. No prose, no markdown fences.
+1. Output valid JSON. You may wrap it in a ```json ... ``` code block if needed.
 2. Ensure every edge source and target exactly matches a node id.
-3. Use descriptive but concise labels.
-4. Default node type is 'rectangle'.
+3. Default node type is 'rectangle'.
 """
 
 
@@ -68,6 +73,11 @@ async def save_whiteboard_session(session_id: str, payload: WhiteboardXmlPayload
 class GenerateRequest(BaseModel):
     prompt: str
     current_xml: str = ""
+    session_id: str | None = None
+
+
+class DeconstructRequest(BaseModel):
+    image_base64: str
     session_id: str | None = None
 
 
@@ -146,6 +156,137 @@ async def generate_diagram(request: GenerateRequest) -> GenerateResponse:
     await store.update_session_preferences(session_id, {"whiteboard_xml": xml})
 
     return GenerateResponse(xml=xml, message="Diagram generated.", session_id=session_id)
+
+
+@router.post("/deconstruct")
+async def deconstruct_diagram(request: DeconstructRequest) -> GenerateResponse:
+    from deeptutor.services.llm import complete
+    from deeptutor.services.llm.config import get_llm_config
+
+    store = get_sqlite_session_store()
+    session = await store.ensure_session(request.session_id, session_type="whiteboard")
+    session_id = session["id"]
+
+    system_prompt = SYSTEM_PROMPT + "\n\nTask: Analyze the provided image of a diagram (e.g. ERD, flowchart, architecture) and extract EVERY node and connection into the JSON format. Do not simplify; capture the full complexity of the diagram including table names, field names (if possible), and all relational arrows."
+
+    messages = [
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "Convert this diagram image to the logical JSON format."},
+                {"type": "image_url", "image_url": {"url": request.image_base64}},
+            ],
+        }
+    ]
+
+    # Vision model priority (reads .env directly via get_env_store):
+    #   1. VISION_MODEL — local ollama vision model (e.g. gemma4:2b, llava)
+    #   2. NVIDIA_MODEL_NEMO_OMNI + NVIDIA_API_KEY — cloud vision via NVIDIA API
+    #   3. Default LLM_MODEL (fallback, likely non-vision)
+    env = get_env_store()
+    local_vision_model = env.get("VISION_MODEL")
+    nvidia_model = env.get("NVIDIA_MODEL_NEMO_OMNI")
+    nvidia_key = env.get("NVIDIA_API_KEY")
+
+    # Build factory.complete kwargs directly — avoids the LLMClient double-injection
+    # bug where client.complete() always passes model=self.config.model AND the caller
+    # passes model=... in **kwargs, causing "multiple values for keyword argument 'model'".
+    if local_vision_model:
+        # Use local ollama vision model (same host/binding as main LLM)
+        cfg = get_llm_config()
+        logger.info(f"Using local vision model: {local_vision_model}")
+        complete_kwargs: dict[str, Any] = {
+            "prompt": "",
+            "system_prompt": system_prompt,
+            "messages": messages,
+            "max_tokens": 8192,
+            "model": local_vision_model,
+            "api_key": cfg.api_key,
+            "base_url": cfg.base_url,
+            "binding": getattr(cfg, "binding", "openai"),
+        }
+    elif nvidia_model and nvidia_key:
+        # Nemotron is a reasoning model — needs high max_tokens to complete CoT + output
+        logger.info(f"Using NVIDIA vision model: {nvidia_model}")
+        complete_kwargs = {
+            "prompt": "",
+            "system_prompt": system_prompt,
+            "messages": messages,
+            "max_tokens": 16384,
+            "model": nvidia_model,
+            "api_key": nvidia_key,
+            "binding": "nvidia",
+            "base_url": "https://integrate.api.nvidia.com/v1",
+        }
+    else:
+        # Use the default configured model (reads from .env via get_llm_config)
+        cfg = get_llm_config()
+        complete_kwargs = {
+            "prompt": "",
+            "system_prompt": system_prompt,
+            "messages": messages,
+            "max_tokens": 4096,
+            "model": cfg.model,
+            "api_key": cfg.api_key,
+            "base_url": cfg.base_url,
+            "binding": getattr(cfg, "binding", "openai"),
+        }
+
+
+    try:
+        raw = await complete(**complete_kwargs)
+    except Exception as e:
+        logger.error(f"LLM call failed for deconstruction: {e}")
+        raise HTTPException(status_code=500, detail=f"LLM analysis failed: {str(e)}")
+
+    # JSON repair and validation (reuse logic from generate_diagram)
+    json_text = raw.strip()
+    logger.debug(f"Raw vision response: {json_text}")
+
+    # Empty response = model received the image but cannot process it (non-vision model).
+    # Ollama silently returns "" instead of an error for text-only models like qwen2.5.
+    if not json_text:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Vision Capability Missing: The current AI model returned an empty response. "
+                "It likely cannot process images. Switch to a vision-capable model such as "
+                "'llava', 'llava-phi3', or 'gpt-4o' in your .env file (LLM_MODEL setting)."
+            ),
+        )
+
+    # Search anywhere in the response for a ```json``` block or bare JSON object.
+    # Reasoning models (e.g. Nemotron) often prefix the JSON with thinking text.
+    code_block_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", json_text, re.DOTALL | re.IGNORECASE)
+    if code_block_match:
+        json_text = code_block_match.group(1).strip()
+    elif not json_text.startswith("{"):
+        bare_match = re.search(r"(\{.*\})", json_text, re.DOTALL)
+        if bare_match:
+            json_text = bare_match.group(1).strip()
+
+    try:
+        from json_repair import repair_json
+        repaired = repair_json(json_text)
+        data = json.loads(repaired)
+        graph = LogicalGraph.model_validate(data)
+    except Exception as e:
+        logger.error(f"Failed to parse logic graph from vision: {e}\nRaw: {raw}")
+        # Check if the response looks like a conversational refusal (typical of non-vision models)
+        if any(keyword in raw.lower() for keyword in ["describe", "not see", "cannot analyze", "provide details"]):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Vision Capability Missing: Your current AI model cannot 'see' images. "
+                    "Switch to a vision-capable model like 'llava' or 'gpt-4o' in your .env file."
+                ),
+            )
+        raise HTTPException(status_code=500, detail="The AI returned an invalid response. Please try a clearer image.")
+
+    xml = _generate_mxgraph_xml(graph)
+    await store.update_session_preferences(session_id, {"whiteboard_xml": xml})
+
+    return GenerateResponse(xml=xml, message="Diagram deconstructed.", session_id=session_id)
 
 
 def _generate_mxgraph_xml(graph: LogicalGraph) -> str:

@@ -189,6 +189,7 @@ from deeptutor.api.routers import (
     chat,
     co_writer,
     dashboard,
+    decks,
     guide,
     knowledge,
     memory,
@@ -227,6 +228,7 @@ app.include_router(tutorbot.router, prefix="/api/v1/tutorbot", tags=["tutorbot"]
 app.include_router(whiteboard.router, prefix="/api/v1/whiteboard", tags=["whiteboard"])
 app.include_router(mindmap.router, prefix="/api/v1/mindmap", tags=["mindmap"])
 app.include_router(podcasts.router, prefix="/api/v1/podcasts", tags=["podcasts"])
+app.include_router(decks.router, prefix="/api/v1/decks", tags=["decks"])
 app.include_router(voice.router, prefix="/api/v1/voice", tags=["voice"])
 
 # Unified WebSocket endpoint
