@@ -223,7 +223,19 @@ class TurnRuntimeManager:
             "capability": capability,
             "config": {**validated_public_config, **runtime_only_config},
         }
-        session = await self.store.ensure_session(payload.get("session_id"))
+
+        # Map capability to session type to prevent cluttering chat history
+        session_type = "chat"
+        if capability == "exam_simulator":
+            session_type = "exam"
+        elif capability == "mindmap":
+            session_type = "mindmap"
+        elif capability == "co_writer":
+            session_type = "co_writer"
+
+        session = await self.store.ensure_session(
+            payload.get("session_id"), session_type=session_type
+        )
         await self.store.update_session_preferences(
             session["id"],
             {

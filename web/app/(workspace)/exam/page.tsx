@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ClipboardList, Loader2, Upload } from "lucide-react";
+import { ClipboardList, Loader2, Upload, History, FileText, CheckCircle2, ChevronRight, Play, Sparkles, BookOpen, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ExamTakeSession } from "@/components/exam/ExamTakeSession";
 import { apiUrl } from "@/lib/api";
@@ -83,7 +83,6 @@ export default function ExamSimulatorPage() {
     };
   }, [generationSource]);
 
-  /** When "Topic + documents" is on and references are empty, fill from KB `raw/` filenames (server). */
   useEffect(() => {
     if (generationSource !== "topic_plus_docs" || !uploadKb.trim()) return;
     let cancelled = false;
@@ -319,7 +318,6 @@ export default function ExamSimulatorPage() {
       if (saveStatusPendingTimerRef.current) {
         window.clearTimeout(saveStatusPendingTimerRef.current);
       }
-      // Delay "saving" indicator slightly to avoid flicker on fast round-trips.
       saveStatusPendingTimerRef.current = window.setTimeout(() => {
         setSaveStatus("saving");
         saveStatusPendingTimerRef.current = null;
@@ -418,9 +416,7 @@ export default function ExamSimulatorPage() {
       return;
     }
     if (!document.fullscreenElement) {
-      void examViewportRef.current?.requestFullscreen().catch(() => {
-        // Ignore browser restrictions (e.g. denied fullscreen policy).
-      });
+      void examViewportRef.current?.requestFullscreen().catch(() => {});
     }
     const config = buildExamSimulatorConfig(formValues);
     sendExamConfig(config);
@@ -431,252 +427,196 @@ export default function ExamSimulatorPage() {
   const isTakeTurnBusy = busy && !!examSession;
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-y-auto bg-[var(--background)]">
-      <div className="mx-auto w-full max-w-3xl px-4 py-8 md:px-8">
-        <div className="mb-8 flex items-start gap-3">
-          <div className="rounded-xl bg-[var(--secondary)] p-2.5 text-[var(--foreground)]">
-            <ClipboardList className="h-6 w-6" aria-hidden />
+    <div className="flex h-full flex-col overflow-hidden bg-[var(--background)] animate-fade-in relative">
+      {/* Header Section */}
+      <div className="relative z-20 flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
+        <div className="flex flex-col items-start gap-1">
+          <div className="flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-emerald-600 dark:text-emerald-400">
+            <ClipboardList size={14} strokeWidth={2.5} />
+            <span className="text-[11px] font-bold uppercase tracking-wider">{t("Workshop")}</span>
           </div>
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight text-[var(--foreground)]">
-              {t("exam.title")}
-            </h1>
-            <p className="mt-1 text-sm leading-relaxed text-[var(--muted-foreground)]">
-              {t("exam.subtitle")}
-            </p>
-          </div>
+          <h1 className="font-serif text-2xl font-medium tracking-tight text-[var(--foreground)]">
+            {t("Exam Simulator")}
+          </h1>
         </div>
-
-        <div className="space-y-5 rounded-2xl border border-[var(--border)] bg-[var(--secondary)]/40 p-5 md:p-6">
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">
-              {t("exam.topic")}
-            </span>
-            <textarea
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              rows={2}
-              placeholder={t("exam.topicPlaceholder")}
-              className="w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-            />
-          </label>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">
-                {t("exam.duration")}
-              </span>
-              <input
-                type="number"
-                min={5}
-                max={240}
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-                className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-              />
-            </label>
-            <div className="block sm:col-span-2">
-              <span className="mb-2 block text-sm font-medium text-[var(--foreground)]">
-                {t("exam.generation")}
-              </span>
-              <div className="flex flex-wrap gap-4">
-                <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--foreground)]">
-                  <input
-                    type="radio"
-                    name="exam-gen"
-                    checked={generationSource === "topic_only"}
-                    onChange={() => {
-                      setGenerationSource("topic_only");
-                      setDocIds("");
-                      setUploadError(null);
-                    }}
-                    className="accent-[var(--foreground)]"
-                  />
-                  {t("exam.topicOnly")}
-                </label>
-                <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--foreground)]">
-                  <input
-                    type="radio"
-                    name="exam-gen"
-                    checked={generationSource === "topic_plus_docs"}
-                    onChange={() => setGenerationSource("topic_plus_docs")}
-                    className="accent-[var(--foreground)]"
-                  />
-                  {t("exam.topicPlusDocs")}
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {generationSource === "topic_plus_docs" && (
-            <div className="space-y-4">
-              <div className="block">
-                <span className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">
-                  {t("exam.uploadKb")}
-                </span>
-                {kbsLoading ? (
-                  <p className="text-sm text-[var(--muted-foreground)]">{t("exam.kbLoading")}</p>
-                ) : knowledgeBases.length === 0 ? (
-                  <p className="text-sm text-[var(--muted-foreground)]">{t("exam.uploadNoKb")}</p>
-                ) : (
-                  <select
-                    value={uploadKb}
-                    onChange={(e) => setUploadKb(e.target.value)}
-                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-                  >
-                    {knowledgeBases.map((kb) => (
-                      <option key={kb.name} value={kb.name}>
-                        {kb.name}
-                        {kb.is_default ? " *" : ""}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              {knowledgeBases.length > 0 && uploadKb ? (
-                <div>
-                  <span className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">
-                    {t("exam.uploadDrop")}
-                  </span>
-                  <label
-                    className={`flex min-h-[88px] cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center text-sm transition-colors ${
-                      dragOverUpload
-                        ? "border-[var(--foreground)]/40 bg-[var(--background)]"
-                        : "border-[var(--border)] bg-[var(--background)]/60 hover:border-[var(--foreground)]/25"
-                    } ${uploadBusy ? "pointer-events-none opacity-60" : ""}`}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      setDragOverUpload(true);
-                    }}
-                    onDragLeave={() => setDragOverUpload(false)}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      setDragOverUpload(false);
-                      const dropped = Array.from(e.dataTransfer.files || []);
-                      void handleExamFiles(dropped);
-                    }}
-                  >
-                    <Upload className="h-5 w-5 text-[var(--muted-foreground)]" aria-hidden />
-                    <span className="text-[var(--muted-foreground)]">
-                      {uploadBusy ? t("exam.uploadBusy") : t("exam.uploadDrop")}
-                    </span>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      multiple
-                      accept=".pdf,.doc,.docx,.txt,.md,.markdown,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                      className="hidden"
-                      disabled={uploadBusy}
-                      onChange={(e) => {
-                        const fl = e.target.files;
-                        if (fl?.length) void handleExamFiles(fl);
-                      }}
-                    />
-                  </label>
-                </div>
-              ) : null}
-
-              {uploadError ? (
-                <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-                  {uploadError}
-                </p>
-              ) : null}
-
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">
-                  {t("exam.docIds")}
-                </span>
-                <input
-                  type="text"
-                  value={docIds}
-                  onChange={(e) => setDocIds(e.target.value)}
-                  placeholder={t("exam.docIdsPlaceholder")}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-                />
-                <p className="mt-1 text-xs text-[var(--muted-foreground)]">{t("exam.docIdsHelp")}</p>
-              </label>
-            </div>
-          )}
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            {(
-              [
-                ["exam.mcq", mcq, setMcq] as const,
-                ["exam.short", shortN, setShortN] as const,
-                ["exam.long", longN, setLongN] as const,
-              ] as const
-            ).map(([labelKey, val, setVal]) => (
-              <label key={labelKey} className="block">
-                <span className="mb-1.5 block text-sm font-medium text-[var(--foreground)]">
-                  {t(labelKey)}
-                </span>
-                <input
-                  type="number"
-                  min={0}
-                  value={val}
-                  onChange={(e) => setVal(e.target.value)}
-                  className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-                />
-              </label>
-            ))}
-          </div>
-
-          {attemptedSubmit && validationError && validationMessage ? (
-            <p className="text-sm text-amber-700 dark:text-amber-400" role="alert">
-              {validationMessage}
-            </p>
-          ) : null}
-
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            <button
-              type="button"
-              onClick={handleStart}
-              disabled={isGeneratingBusy}
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--foreground)] px-4 py-2.5 text-sm font-medium text-[var(--background)] transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isGeneratingBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {isGeneratingBusy ? t("exam.streaming") : t("exam.start")}
-            </button>
-            {isGeneratingBusy ? (
-              <button
-                type="button"
-                onClick={() => {
-                  const turnId = activeTurnIdRef.current;
-                  if (!turnId) return;
-                  sendThroughExamWs({ type: "cancel_turn", turn_id: turnId });
-                  setIsStreaming(false);
-                  setPendingExamTurn(null);
-                  activeTurnIdRef.current = null;
-                }}
-                className="rounded-lg border border-[var(--border)] px-4 py-2.5 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--secondary)]"
-              >
-                {t("exam.cancel")}
-              </button>
-            ) : null}
-          </div>
-        </div>
-
-        <div ref={examViewportRef} className="exam-fullscreen-viewport">
-          {examSession ? (
-            <ExamTakeSession
-              key={examSession.attempt_id}
-              topic={examSession.topic}
-              attemptId={examSession.attempt_id}
-              deadlineAt={examSession.deadline_at}
-              questions={examSession.questions}
-              answers={examAnswers}
-              onAnswerChange={handleExamAnswerChange}
-              saveStatus={saveStatus}
-              saveError={saveError}
-              isStreaming={isTakeTurnBusy && pendingExamTurn !== "save_answer"}
-              examClosed={takeLocked}
-              grading={grading}
-              onRequestSubmit={submitExam}
-            />
-          ) : null}
+        
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setExamSession(null)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+              !examSession 
+                ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed" 
+                : "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95"
+            }`}
+          >
+            <Plus size={16} />
+            {t("New Exam")}
+          </button>
         </div>
       </div>
+
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Left Sidebar: Context & Settings */}
+        <div className="w-[320px] border-r border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col overflow-hidden">
+          <div className="p-6 flex flex-col h-full gap-8">
+            <div>
+              <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <History size={12} />
+                {t("Recent Activity")}
+              </h2>
+              <div className="py-12 text-center rounded-2xl bg-white/40 dark:bg-slate-800/40 border border-dashed border-slate-200 dark:border-slate-700">
+                <FileText className="mx-auto h-6 w-6 text-slate-300 mb-2 opacity-50" />
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{t("No recent attempts")}</p>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <BookOpen size={12} />
+                {t("Quick Tips")}
+              </h2>
+              <ul className="space-y-3">
+                <li className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 flex gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 mt-1 shrink-0" />
+                  Use detailed topics for better questions.
+                </li>
+                <li className="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 flex gap-2">
+                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 mt-1 shrink-0" />
+                  Topic + Docs provides the most accurate context.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-900 relative overflow-hidden">
+          {examSession ? (
+            <div ref={examViewportRef} className="h-full overflow-y-auto">
+              <ExamTakeSession
+                key={examSession.attempt_id}
+                topic={examSession.topic}
+                attemptId={examSession.attempt_id}
+                deadlineAt={examSession.deadline_at}
+                questions={examSession.questions}
+                answers={examAnswers}
+                onAnswerChange={handleExamAnswerChange}
+                saveStatus={saveStatus}
+                saveError={saveError}
+                isStreaming={isTakeTurnBusy && pendingExamTurn !== "save_answer"}
+                examClosed={takeLocked}
+                grading={grading}
+                onRequestSubmit={submitExam}
+              />
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto">
+              <div className="w-full max-w-2xl">
+                <div className="mb-12 text-center">
+                  <div className="w-20 h-20 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <Sparkles className="w-10 h-10 text-emerald-600" />
+                  </div>
+                  <h2 className="font-serif text-3xl font-medium mb-3">{t("Start an Exam Session")}</h2>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">{t("Challenge yourself with AI-generated questions tailored to your goals.")}</p>
+                </div>
+
+                <div className="space-y-6 rounded-[40px] bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
+                  {/* Topic Section */}
+                  <div>
+                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t("Exam Topic")}</label>
+                    <textarea 
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all placeholder:text-slate-300 min-h-[80px] resize-none"
+                      placeholder={t("e.g., Organic Chemistry: Carbonyl Compounds")}
+                      value={topic}
+                      onChange={e => setTopic(e.target.value)}
+                    />
+                  </div>
+
+                  {/* Settings Grid */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t("Duration (min)")}</label>
+                      <input 
+                        type="number"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all"
+                        value={duration}
+                        onChange={e => setDuration(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t("Generation")}</label>
+                      <div className="flex bg-white dark:bg-slate-900 rounded-2xl p-1 border border-slate-200 dark:border-slate-700">
+                        <button 
+                          onClick={() => setGenerationSource("topic_only")}
+                          className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${generationSource === "topic_only" ? "bg-emerald-600 text-white shadow-md" : "text-slate-400 hover:text-slate-600"}`}
+                        >
+                          Topic
+                        </button>
+                        <button 
+                          onClick={() => setGenerationSource("topic_plus_docs")}
+                          className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase transition-all ${generationSource === "topic_plus_docs" ? "bg-emerald-600 text-white shadow-md" : "text-slate-400 hover:text-slate-600"}`}
+                        >
+                          +Docs
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Question Mix */}
+                  <div>
+                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t("Question Mix")}</label>
+                    <div className="grid grid-cols-3 gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-700">
+                      <div className="flex flex-col items-center">
+                        <span className="text-[9px] font-black text-slate-400 uppercase mb-1">MCQ</span>
+                        <input type="number" className="w-12 text-center text-sm font-bold bg-slate-50 dark:bg-slate-800 rounded-lg py-1" value={mcq} onChange={e => setMcq(e.target.value)} />
+                      </div>
+                      <div className="flex flex-col items-center border-x border-slate-100 dark:border-slate-800">
+                        <span className="text-[9px] font-black text-slate-400 uppercase mb-1">Short</span>
+                        <input type="number" className="w-12 text-center text-sm font-bold bg-slate-50 dark:bg-slate-800 rounded-lg py-1" value={shortN} onChange={e => setShortN(e.target.value)} />
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <span className="text-[9px] font-black text-slate-400 uppercase mb-1">Long</span>
+                        <input type="number" className="w-12 text-center text-sm font-bold bg-slate-50 dark:bg-slate-800 rounded-lg py-1" value={longN} onChange={e => setLongN(e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {attemptedSubmit && validationError && validationMessage && (
+                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+                      {validationMessage}
+                    </div>
+                  )}
+
+                  <button 
+                    onClick={handleStart}
+                    disabled={isGeneratingBusy}
+                    className="w-full flex items-center justify-center gap-3 bg-emerald-600 hover:bg-emerald-500 text-white h-14 rounded-2xl font-bold transition-all disabled:opacity-30 disabled:grayscale shadow-xl shadow-emerald-500/20 active:scale-[0.98]"
+                  >
+                    {isGeneratingBusy ? <Loader2 size={20} className="animate-spin" /> : <Play size={20} />}
+                    {isGeneratingBusy ? t("Streaming...") : t("Start Simulation")}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(0,0,0,0.05);
+          border-radius: 10px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.05);
+        }
+      `}</style>
     </div>
   );
 }

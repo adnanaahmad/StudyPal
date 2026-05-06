@@ -150,22 +150,22 @@ export function ExamTakeSession({
     const filled = (answers[q.question_id] ?? "").trim() !== "";
     const isActive = idx === activeIndex;
     return [
-      "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-medium transition-colors",
+      "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold transition-all hover:scale-105 active:scale-95",
       isActive
-        ? "bg-[var(--foreground)] text-[var(--background)]"
+        ? "bg-[var(--foreground)] text-[var(--background)] shadow-lg shadow-slate-900/10 dark:shadow-none"
         : filled
           ? "border border-[var(--border)] bg-[var(--secondary)] text-[var(--foreground)]"
-          : "border border-dashed border-[var(--border)] text-[var(--muted-foreground)]",
+          : "border border-dashed border-[var(--border)] text-[var(--muted-foreground)] hover:border-slate-400 dark:hover:border-slate-500",
     ].join(" ");
   };
 
   return (
     <div
       ref={containerRef}
-      className={`exam-take-root space-y-4 bg-[var(--secondary)]/30 p-4 md:p-6 ${
+      className={`exam-take-root space-y-4 bg-[var(--card)] p-4 md:p-8 ${
         isFullscreen
-          ? "mt-0 min-h-full rounded-none border-0"
-          : "mt-8 rounded-2xl border border-[var(--border)]"
+          ? "mt-0 min-h-full rounded-none border-0 shadow-none"
+          : "mt-8 rounded-[32px] border border-[var(--border)] shadow-xl shadow-slate-200/50 dark:shadow-none"
       }`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -257,19 +257,19 @@ export function ExamTakeSession({
                   <label
                     key={letter}
                     htmlFor={id}
-                    className="flex min-w-0 cursor-pointer gap-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3 text-sm has-[:checked]:border-[var(--foreground)]/30 has-[:checked]:bg-[var(--secondary)]/60"
+                    className="flex min-w-0 cursor-pointer gap-4 rounded-2xl border border-[var(--border)] bg-[var(--background)] p-4 text-sm transition-all hover:border-emerald-500/30 hover:bg-slate-50 dark:hover:bg-slate-800/50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-500/5 has-[:checked]:ring-1 has-[:checked]:ring-emerald-500/20"
                   >
                     <input
                       id={id}
                       type="radio"
                       name={active.question_id}
-                      className="mt-0.5 accent-[var(--foreground)]"
+                      className="mt-1 h-4 w-4 accent-emerald-600"
                       checked={(answers[active.question_id] ?? "") === letter}
                       disabled={examClosed || !!grading}
                       onChange={() => onAnswerChange(active.question_id, letter)}
                     />
-                    <span className="min-w-0 break-words">
-                      <span className="font-medium text-[var(--foreground)]">{letter}.</span>{" "}
+                    <span className="min-w-0 break-words leading-relaxed">
+                      <span className="font-bold text-[var(--foreground)]">{letter}.</span>{" "}
                       <span className="text-[var(--foreground)]">{opt}</span>
                     </span>
                   </label>
@@ -282,7 +282,7 @@ export function ExamTakeSession({
               onChange={(e) => onAnswerChange(active.question_id, e.target.value)}
               disabled={examClosed || !!grading}
               rows={active.type === "long" ? 12 : 5}
-              className="w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] disabled:opacity-60"
+              className="w-full resize-y rounded-2xl border border-[var(--border)] bg-[var(--background)] px-5 py-4 text-sm text-[var(--foreground)] outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all disabled:opacity-60"
               placeholder={t("exam.take.textPlaceholder")}
             />
           )}

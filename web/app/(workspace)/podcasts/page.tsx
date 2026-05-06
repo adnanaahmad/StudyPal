@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Headphones, Plus, FileText, Trash2, Clock } from "lucide-react";
+import { Headphones, Plus, FileText, Trash2, Clock, Sparkles, Play, ChevronRight, Mic2 } from "lucide-react";
 import { PodcastLoading } from "@/components/podcasts/PodcastLoading";
 import { PodcastPlayer } from "@/components/podcasts/PodcastPlayer";
 import { apiUrl } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 interface PodcastSummary {
   id: string;
@@ -16,6 +17,7 @@ interface PodcastSummary {
 }
 
 export default function PodcastsPage() {
+  const { t } = useTranslation();
   const [podcasts, setPodcasts] = useState<PodcastSummary[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -72,7 +74,6 @@ export default function PodcastsPage() {
       if (res.ok) {
         const data = await res.json();
         setActivePodcastId(data.id);
-        // Start polling
         pollPodcastStatus(data.id);
       }
     } catch (e) {
@@ -91,7 +92,7 @@ export default function PodcastsPage() {
             clearInterval(interval);
             setActivePodcastData(data);
             setView('playing');
-            fetchPodcasts(); // refresh library
+            fetchPodcasts();
           } else if (data.status === 'failed') {
             clearInterval(interval);
             setView('library');
@@ -120,120 +121,141 @@ export default function PodcastsPage() {
     return <PodcastLoading />;
   }
 
-  if (view === 'playing' && activePodcastData) {
-    return (
-      <PodcastPlayer 
-        podcast={activePodcastData} 
-        onBack={() => setView('library')} 
-      />
-    );
-  }
-
   return (
-    <div className="flex h-full flex-col max-w-5xl mx-auto p-8 overflow-y-auto">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-[var(--foreground)] tracking-tight">Audio Overviews</h1>
-          <p className="text-[var(--muted-foreground)] mt-2">Listen to AI-generated discussions of your study materials.</p>
+    <div className="flex h-full flex-col overflow-hidden bg-[var(--background)] animate-fade-in relative">
+      {/* Header Section */}
+      <div className="relative z-20 flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
+        <div className="flex flex-col items-start gap-1">
+          <div className="flex items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1 text-blue-600 dark:text-blue-400">
+            <Mic2 size={14} strokeWidth={2.5} />
+            <span className="text-[11px] font-bold uppercase tracking-wider">{t("Workshop")}</span>
+          </div>
+          <h1 className="font-serif text-2xl font-medium tracking-tight text-[var(--foreground)]">
+            {t("Audio Overviews")}
+          </h1>
         </div>
+        
+        <button 
+          onClick={() => setView('library')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+            view === 'library' 
+              ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed" 
+              : "bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95"
+          }`}
+        >
+          <Plus size={16} />
+          {t("New Overview")}
+        </button>
       </div>
 
-      {/* Creation Modal / Inline Form */}
-      <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 mb-12 shadow-sm">
-        <h2 className="text-lg font-semibold flex items-center gap-2 mb-4">
-          <Headphones size={20} className="text-blue-500" />
-          Create New Podcast
-        </h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Topic or Subject</label>
-            <input 
-              className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-              placeholder="e.g., The implications of Quantum Mechanics"
-              value={topic}
-              onChange={e => setTopic(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-[var(--foreground)] mb-1">Source Material (Optional)</label>
-            <textarea 
-              className="w-full bg-[var(--background)] border border-[var(--border)] rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 min-h-[100px] resize-y"
-              placeholder="Paste your notes, essay, or document text here..."
-              value={fileContent}
-              onChange={e => setFileContent(e.target.value)}
-            />
-          </div>
-          <div className="flex justify-end pt-2">
-            <button 
-              onClick={handleCreate}
-              disabled={!topic.trim() && !fileContent.trim()}
-              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white px-5 py-2.5 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <SparklesIcon size={18} />
-              Generate Podcast
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Library Grid */}
-      <div>
-        <h2 className="text-xl font-semibold mb-6">Your Library</h2>
-        {loading ? (
-          <div className="text-sm text-[var(--muted-foreground)]">Loading...</div>
-        ) : podcasts.length === 0 ? (
-          <div className="text-center py-12 rounded-xl border border-dashed border-[var(--border)]">
-            <Headphones className="mx-auto h-12 w-12 text-[var(--muted-foreground)] opacity-50 mb-3" />
-            <p className="text-[var(--muted-foreground)]">No podcasts yet. Create your first one above!</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {podcasts.map(p => (
-              <div 
-                key={p.id} 
-                className="group relative rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 hover:border-blue-500/50 transition-colors cursor-pointer flex flex-col h-[180px]"
-                onClick={() => p.status === 'completed' && handlePlay(p.id)}
-              >
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg line-clamp-2">{p.title}</h3>
-                  <div className="flex items-center gap-4 mt-3 text-sm text-[var(--muted-foreground)]">
-                    <span className="flex items-center gap-1.5"><Clock size={14}/> {Math.floor(p.duration / 60)}:{Math.floor(p.duration % 60).toString().padStart(2, '0')}</span>
-                    <span className="capitalize">{p.status}</span>
-                  </div>
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Left Sidebar: Library */}
+        <div className="w-[320px] border-r border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 flex flex-col overflow-hidden">
+          <div className="p-6 flex flex-col h-full">
+            <h2 className="text-xs font-black text-[var(--muted-foreground)] uppercase tracking-widest mb-4">{t("Your Library")}</h2>
+            
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+              {loading ? (
+                [1,2,3].map(i => <div key={i} className="h-20 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse" />)
+              ) : podcasts.length === 0 ? (
+                <div className="py-12 text-center">
+                  <Headphones className="mx-auto h-8 w-8 text-slate-300 mb-3 opacity-50" />
+                  <p className="text-[11px] font-medium text-slate-400">{t("No podcasts yet")}</p>
                 </div>
-                
-                {p.status === 'completed' ? (
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="flex -space-x-2">
-                      <div className="h-8 w-8 rounded-full bg-cyan-500/20 border border-cyan-500 flex items-center justify-center text-xs font-bold text-cyan-400">S</div>
-                      <div className="h-8 w-8 rounded-full bg-purple-500/20 border border-purple-500 flex items-center justify-center text-xs font-bold text-purple-400">A</div>
+              ) : (
+                podcasts.map(p => (
+                  <button
+                    key={p.id}
+                    onClick={() => p.status === 'completed' && handlePlay(p.id)}
+                    className={`w-full text-left p-4 rounded-2xl border transition-all ${
+                      activePodcastId === p.id 
+                        ? "bg-[var(--card)] border-blue-500/30 shadow-md ring-1 ring-blue-500/10" 
+                        : "bg-[var(--card)]/50 border-[var(--border)] hover:border-blue-500/20"
+                    }`}
+                  >
+                    <h3 className="font-bold text-[13px] line-clamp-1 text-[var(--foreground)]">{p.title}</h3>
+                    <div className="flex items-center gap-3 mt-2 text-[10px] font-black text-[var(--muted-foreground)] uppercase">
+                      <span className="flex items-center gap-1"><Clock size={10}/> {Math.floor(p.duration / 60)}:{Math.floor(p.duration % 60).toString().padStart(2, '0')}</span>
+                      <span className={p.status === 'completed' ? "text-emerald-500" : "text-blue-500 animate-pulse"}>{p.status}</span>
                     </div>
-                    <button className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity translate-y-2 group-hover:translate-y-0">
-                      <PlayIcon size={20} className="ml-1" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="mt-4 h-1 w-full bg-[var(--secondary)] rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 w-1/2 animate-pulse rounded-full" />
-                  </div>
-                )}
-              </div>
-            ))}
+                  </button>
+                ))
+              )}
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-slate-900 relative overflow-hidden">
+          {view === 'playing' && activePodcastData ? (
+            <div className="h-full overflow-y-auto">
+              <PodcastPlayer 
+                podcast={activePodcastData} 
+                onBack={() => setView('library')} 
+              />
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto">
+              <div className="w-full max-w-xl">
+                <div className="mb-12 text-center">
+                  <div className="w-20 h-20 bg-blue-500/10 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-inner">
+                    <Sparkles className="w-10 h-10 text-blue-600" />
+                  </div>
+                  <h2 className="font-serif text-3xl font-medium mb-3">{t("Create an Audio Overview")}</h2>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">{t("Transform your materials into an AI-powered conversational deep dive.")}</p>
+                </div>
+
+                <div className="space-y-6 rounded-[40px] bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
+                  <div>
+                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t("Topic or Subject")}</label>
+                    <input 
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-300"
+                      placeholder={t("e.g., The implications of Quantum Mechanics")}
+                      value={topic}
+                      onChange={e => setTopic(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-[11px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">{t("Source Material (Optional)")}</label>
+                    <textarea 
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl px-5 py-5 text-sm focus:outline-none focus:ring-4 focus:ring-blue-500/10 transition-all min-h-[160px] resize-none placeholder:text-slate-300"
+                      placeholder={t("Paste your notes, essay, or document text here...")}
+                      value={fileContent}
+                      onChange={e => setFileContent(e.target.value)}
+                    />
+                  </div>
+
+                  <button 
+                    onClick={handleCreate}
+                    disabled={!topic.trim() && !fileContent.trim()}
+                    className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 text-white h-14 rounded-2xl font-bold transition-all disabled:opacity-30 disabled:grayscale shadow-xl shadow-blue-500/20 active:scale-[0.98]"
+                  >
+                    <Sparkles size={20} />
+                    {t("Generate Podcast")}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(0,0,0,0.05);
+          border-radius: 10px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.05);
+        }
+      `}</style>
     </div>
-  );
-}
-
-function SparklesIcon(props: any) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
-  );
-}
-
-function PlayIcon(props: any) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" {...props}><polygon points="6 3 20 12 6 21 6 3"/></svg>
   );
 }

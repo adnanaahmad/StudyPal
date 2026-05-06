@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUp, Loader2, Paperclip, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useUnifiedChat } from "@/context/UnifiedChatContext";
 import { MindmapToolbar } from "./components/MindmapToolbar";
 import { useMindmapSession } from "./hooks/useMindmapSession";
 import { apiUrl } from "@/lib/api";
@@ -17,14 +16,13 @@ const MindmapCanvas = dynamic(
 
 export default function MindmapPage() {
   const { t } = useTranslation();
-  const { selectedSessionId } = useUnifiedChat();
 
   const [markdown, setMarkdown] = useState("");
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [attachment, setAttachment] = useState<{ name: string; content: string } | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(selectedSessionId);
+  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -36,10 +34,7 @@ export default function MindmapPage() {
     if (initialMarkdown) setMarkdown(initialMarkdown);
   }, [initialMarkdown]);
 
-  // Sync session ID
-  useEffect(() => {
-    if (selectedSessionId) setSessionId(selectedSessionId);
-  }, [selectedSessionId]);
+  // Sync session ID removed to decouple from chat
 
   // Auto-resize textarea
   useEffect(() => {
@@ -64,9 +59,9 @@ export default function MindmapPage() {
     const prompt = input.trim();
     if (!prompt || loading) return;
 
-    setInput("");
     setLoading(true);
     setError(null);
+    setMarkdown(""); // Clear canvas while thinking
 
     try {
       const res = await fetch(apiUrl("/api/v1/mindmap/generate"), {
@@ -92,6 +87,7 @@ export default function MindmapPage() {
       setSessionId(data.session_id);
       saveMarkdown(data.markdown);
       setAttachment(null);
+      setInput(""); // Clear only on success
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -122,8 +118,24 @@ export default function MindmapPage() {
       <div className="relative flex flex-1 overflow-hidden">
         <MindmapCanvas markdown={markdown} />
 
+        {/* ── Central Loader ── */}
+        {loading && (
+          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-white dark:bg-slate-950">
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex gap-2.5">
+                <div className="h-2 w-2 rounded-full bg-[var(--primary)] animate-bounce [animation-delay:-0.3s]" />
+                <div className="h-2 w-2 rounded-full bg-[var(--primary)] animate-bounce [animation-delay:-0.15s]" />
+                <div className="h-2 w-2 rounded-full bg-[var(--primary)] animate-bounce" />
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--primary)] opacity-40">
+                {t("Thinking")}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ── Floating composer bar ── */}
-        <div className="absolute bottom-6 left-1/2 w-full max-w-[680px] -translate-x-1/2 px-4">
+        <div className="absolute bottom-6 left-1/2 w-full max-w-[680px] -translate-x-1/2 px-4 z-50">
           {/* Error banner */}
           {error && (
             <div className="mb-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-[12px] text-red-400">
@@ -166,9 +178,10 @@ export default function MindmapPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={t("Describe a topic or ask to modify the map…")}
+              disabled={loading}
+              placeholder={loading ? t("AI is thinking...") : t("Describe a topic or ask to modify the map…")}
               rows={1}
-              className="flex-1 resize-none bg-transparent text-[13.5px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none"
+              className={`flex-1 resize-none bg-transparent text-[13.5px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none transition-opacity ${loading ? "opacity-50" : ""}`}
               style={{ minHeight: "24px", maxHeight: "120px" }}
             />
 

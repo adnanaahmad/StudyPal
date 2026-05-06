@@ -472,6 +472,7 @@
   padding: 1.5rem;
   overflow-y: auto;
   background: var(--background) !important;
+  color: var(--foreground);
 }
 
 .exam-take-root:fullscreen::backdrop {
@@ -500,17 +501,12 @@
   height: 100%;
   overflow-y: auto;
   padding: 0;
-  background: #F8FAFC !important;
-  color: #0F172A;
-  --background: #F8FAFC;
-  --foreground: #0F172A;
-  --secondary: #F1F5F9;
-  --muted-foreground: #64748B;
-  --border: #E2E8F0;
+  background: var(--background) !important;
+  color: var(--foreground);
 }
 
 .exam-fullscreen-viewport:fullscreen::backdrop {
-  background: #F8FAFC;
+  background: var(--background);
 }
 
 .exam-fullscreen-viewport:-webkit-full-screen {
@@ -518,17 +514,12 @@
   height: 100%;
   overflow-y: auto;
   padding: 0;
-  background: #F8FAFC !important;
-  color: #0F172A;
-  --background: #F8FAFC;
-  --foreground: #0F172A;
-  --secondary: #F1F5F9;
-  --muted-foreground: #64748B;
-  --border: #E2E8F0;
+  background: var(--background) !important;
+  color: var(--foreground);
 }
 
 .exam-fullscreen-viewport:-webkit-full-screen::backdrop {
-  background: #F8FAFC;
+  background: var(--background);
 }
 
 @keyframes breathe {
