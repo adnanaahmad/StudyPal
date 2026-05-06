@@ -153,8 +153,7 @@ export function WhiteboardAIPanel({
       </div>
 
       <div className="border-t border-[var(--border)] p-3">
-
-        <div className="flex items-end gap-2">
+        <div className="flex items-end rounded-xl border border-[var(--border)] bg-[var(--background)] p-2">
           <input
             type="file"
             ref={fileInputRef}
@@ -164,10 +163,11 @@ export function WhiteboardAIPanel({
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="rounded-lg p-2 text-[var(--muted-foreground)] hover:bg-[var(--secondary)]"
+            className="inline-flex h-10 shrink-0 items-center gap-1 rounded-lg border border-[var(--border)] px-2 text-[12px] font-medium text-[var(--foreground)]"
             title="Upload diagram image"
           >
-            <Paperclip size={18} />
+            <Paperclip size={15} />
+            <span>{t("Upload")}</span>
           </button>
           <textarea
             value={input}
@@ -180,12 +180,13 @@ export function WhiteboardAIPanel({
             }}
             placeholder={t("whiteboard.aiPanel.placeholder")}
             rows={2}
-            className="flex-1 resize-none rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-[12.5px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--ring)]"
+            className="min-h-[40px] flex-1 resize-none bg-transparent px-3 py-0 text-[12.5px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none"
           />
           <button
             onClick={() => void handleSend()}
             disabled={loading || !input.trim()}
-            className="rounded-lg bg-[var(--primary)] p-2 text-[var(--primary-foreground)] disabled:opacity-40"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] disabled:opacity-40"
+            aria-label={t("Send")}
           >
             <ArrowUp size={15} />
           </button>
