@@ -158,7 +158,21 @@ export default function GuidePage() {
   }, [loadSession]);
 
   return (
-    <div className="h-screen flex gap-0 p-4 animate-fade-in relative">
+    <div className="flex h-full min-h-0 flex-col bg-[var(--background)]">
+      <div className="flex shrink-0 items-center border-b border-[var(--border)] px-4 py-2 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2">
+          <BookOpen
+            size={18}
+            strokeWidth={2}
+            className="shrink-0 text-primary"
+            aria-hidden
+          />
+          <h1 className="truncate text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
+            {t("Guided Learning")}
+          </h1>
+        </div>
+      </div>
+      <div className="relative flex min-h-0 flex-1 gap-0 p-4 animate-fade-in">
       {/* LEFT PANEL */}
       <div
         className={`flex flex-col gap-3 h-full transition-all duration-300 flex-shrink-0 mr-4 ${sidebarCollapsed ? "overflow-hidden" : ""}`}
@@ -427,6 +441,7 @@ export default function GuidePage() {
         payload={guideSavePayload}
         onClose={() => setShowSaveModal(false)}
       />
+    </div>
     </div>
   );
 }
