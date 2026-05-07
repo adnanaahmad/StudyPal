@@ -113,7 +113,7 @@ function VoiceStart({ onStart, botId }: { onStart: () => void; botId: string | n
         </div>
 
         {/* Content */}
-        <h1 className="mb-3 text-3xl font-bold tracking-tight">
+        <h1 className="mb-3 text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
           {loading ? "Preparing..." : botInfo ? botInfo.name : "Voice Assistant"}
         </h1>
         <p className="mb-10 text-[var(--muted-foreground)] leading-relaxed">

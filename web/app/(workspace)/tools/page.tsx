@@ -21,7 +21,7 @@ export default function ToolsHubPage() {
             <span className="text-sm font-semibold uppercase tracking-wider">{t("Workshop")}</span>
           </div>
           
-          <h1 className="font-serif text-[42px] font-medium tracking-tight text-[var(--foreground)] md:text-[52px]">
+          <h1 className="text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
             {t("Learning Tools")}
           </h1>
           

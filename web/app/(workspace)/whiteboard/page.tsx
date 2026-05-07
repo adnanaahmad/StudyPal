@@ -174,14 +174,16 @@ export default function WhiteboardPage() {
         onChange={handleFileChange}
       />
       
-      {/* Header Section */}
-      <div className="relative z-20 flex items-center justify-between px-8 py-4 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md shrink-0">
-        <div className="flex flex-col items-start gap-1">
-          <div className="flex items-center gap-2 rounded-full bg-indigo-500/10 px-3 py-1 text-indigo-600 dark:text-indigo-400">
-            <Shapes size={14} strokeWidth={2.5} />
-            <span className="text-[11px] font-bold uppercase tracking-wider">{t("Workshop")}</span>
-          </div>
-          <h1 className="font-serif text-xl font-medium tracking-tight text-[var(--foreground)]">
+      {/* Header — single row: max vertical space for draw.io embed */}
+      <div className="relative z-20 flex shrink-0 items-center justify-between border-b border-slate-100 bg-white/50 px-4 py-2 dark:border-slate-800 dark:bg-slate-900/50 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2">
+          <Shapes
+            size={18}
+            strokeWidth={2}
+            className="shrink-0 text-indigo-600 dark:text-indigo-400"
+            aria-hidden
+          />
+          <h1 className="truncate text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
             {t("Intelligent Whiteboard")}
           </h1>
         </div>
@@ -223,7 +225,7 @@ export default function WhiteboardPage() {
         </div>
 
         {/* AI Assistant Panel */}
-        <div className="w-[400px] border-l border-[var(--border)] flex flex-col bg-[var(--card)]">
+        <div className="flex h-full min-h-0 w-[400px] shrink-0 flex-col border-l border-[var(--border)] bg-[var(--card)]">
           <WhiteboardAIPanel
             sessionId={selectedSessionId}
             getCurrentXml={getXml}

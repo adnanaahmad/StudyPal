@@ -83,21 +83,24 @@ export default function DecksPage() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[var(--background)] animate-fade-in relative">
-      {/* Header Section */}
-      <div className="relative z-20 flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
-        <div className="flex flex-col items-start gap-1">
-          <div className="flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-amber-600 dark:text-amber-400">
-            <MonitorPlay size={14} strokeWidth={2.5} />
-            <span className="text-[11px] font-bold uppercase tracking-wider">{t("Workshop")}</span>
-          </div>
-          <h1 className="font-serif text-2xl font-medium tracking-tight text-[var(--foreground)]">
+      {/* Header — single row */}
+      <div className="relative z-20 flex shrink-0 items-center justify-between border-b border-slate-100 bg-white/50 px-4 py-2 dark:border-slate-800 dark:bg-slate-900/50 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2">
+          <MonitorPlay
+            size={18}
+            strokeWidth={2}
+            className="shrink-0 text-amber-600 dark:text-amber-400"
+            aria-hidden
+          />
+          <h1 className="truncate text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
             {t("Presentation Decks")}
           </h1>
         </div>
-        
+
         <button 
+          type="button"
           onClick={() => {}} // Could scroll to form or focus
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-amber-600 text-white shadow-lg shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all"
+          className="flex shrink-0 items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95"
         >
           <Plus size={16} />
           {t("New Deck")}
@@ -160,7 +163,7 @@ export default function DecksPage() {
                 <div className="w-20 h-20 bg-amber-500/10 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-inner">
                   <Sparkles className="w-10 h-10 text-amber-600" />
                 </div>
-                <h2 className="font-serif text-3xl font-medium mb-3">{t("Generate Slide Deck")}</h2>
+                <h2 className="text-2xl font-semibold tracking-tight mb-3 text-[var(--foreground)]">{t("Generate Slide Deck")}</h2>
                 <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
                   {t("Transform notes and papers into professional PowerPoint presentations.")}
                 </p>

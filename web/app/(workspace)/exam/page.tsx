@@ -428,22 +428,25 @@ export default function ExamSimulatorPage() {
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[var(--background)] animate-fade-in relative">
-      {/* Header Section */}
-      <div className="relative z-20 flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
-        <div className="flex flex-col items-start gap-1">
-          <div className="flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-emerald-600 dark:text-emerald-400">
-            <ClipboardList size={14} strokeWidth={2.5} />
-            <span className="text-[11px] font-bold uppercase tracking-wider">{t("Workshop")}</span>
-          </div>
-          <h1 className="text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
+      {/* Header — single row */}
+      <div className="relative z-20 flex shrink-0 items-center justify-between border-b border-slate-100 bg-white/50 px-4 py-2 dark:border-slate-800 dark:bg-slate-900/50 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2">
+          <ClipboardList
+            size={18}
+            strokeWidth={2}
+            className="shrink-0 text-emerald-600 dark:text-emerald-400"
+            aria-hidden
+          />
+          <h1 className="truncate text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
             {t("Exam Simulator")}
           </h1>
         </div>
-        
-        <div className="flex items-center gap-3">
+
+        <div className="flex shrink-0 items-center gap-3">
           <button 
+            type="button"
             onClick={() => setExamSession(null)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+            className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all ${
               !examSession 
                 ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed" 
                 : "bg-emerald-600 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95"

@@ -725,7 +725,7 @@ export default function HomePage() {
         {!hasMessages ? (
           <div className="flex flex-1 min-h-0 flex-col items-center justify-center animate-fade-in">
             <div className="text-center">
-              <h1 className="font-serif text-[36px] font-medium tracking-[-0.01em] text-[var(--foreground)]">
+              <h1 className="text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
                 {t("What would you like to learn?")}
               </h1>
               <p className="mt-4 text-[15px] text-[var(--muted-foreground)]">

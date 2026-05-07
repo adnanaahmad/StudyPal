@@ -27,7 +27,7 @@ export function MindmapToolbar({ markdown, onNew, saveStatus }: MindmapToolbarPr
     <div className="flex h-10 shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--secondary)] px-4">
       <div className="flex items-center gap-2">
         <FileText size={14} className="text-[var(--muted-foreground)]" />
-        <span className="text-[13px] font-semibold text-[var(--foreground)]">
+        <span className="text-[15px] font-semibold tracking-tight text-[var(--foreground)]">
           {t("Mindmap")}
         </span>
         {saveStatus === "saving" && (

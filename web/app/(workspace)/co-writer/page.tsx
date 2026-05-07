@@ -904,7 +904,7 @@ export default function CoWriterPage() {
       {/* ── Top bar ── */}
       <header className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-4 py-1.5">
         <div className="flex items-center gap-3 text-sm text-[var(--muted-foreground)]">
-          <span className="font-medium text-[var(--foreground)]">
+          <span className="text-[15px] font-semibold tracking-tight text-[var(--foreground)]">
             {t("Co-Writer")}
           </span>
           <span className="hidden text-xs sm:inline">

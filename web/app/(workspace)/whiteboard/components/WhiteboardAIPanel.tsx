@@ -125,7 +125,7 @@ export function WhiteboardAIPanel({
 
 
   return (
-    <div className="flex w-[320px] shrink-0 flex-col border-l border-[var(--border)] bg-[var(--background)]">
+    <div className="flex h-full min-h-0 w-full min-w-0 shrink-0 flex-col bg-[var(--background)]">
       <div className="flex h-10 shrink-0 items-center border-b border-[var(--border)] bg-[var(--secondary)] px-4">
         <span className="text-[13px] font-semibold text-[var(--foreground)]">
           {t("whiteboard.aiPanel.title")}
@@ -153,42 +153,46 @@ export function WhiteboardAIPanel({
       </div>
 
       <div className="border-t border-[var(--border)] p-3">
-        <div className="flex items-end rounded-xl border border-[var(--border)] bg-[var(--background)] p-2">
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/*"
-            onChange={handleFileUpload}
-          />
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          accept="image/*"
+          onChange={handleFileUpload}
+        />
+        <div className="flex min-w-0 items-end gap-2">
+          <div className="relative min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--background)] py-2 pl-3 pr-2">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void handleSend();
+                }
+              }}
+              placeholder={t("whiteboard.aiPanel.placeholder")}
+              rows={2}
+              className="min-h-[40px] w-full resize-none bg-transparent pr-10 text-[12.5px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted-foreground)] transition-colors hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+              aria-label={t("Upload")}
+              title={t("Upload")}
+            >
+              <Paperclip size={18} strokeWidth={2} />
+            </button>
+          </div>
           <button
-            onClick={() => fileInputRef.current?.click()}
-            className="inline-flex h-10 shrink-0 items-center gap-1 rounded-lg border border-[var(--border)] px-2 text-[12px] font-medium text-[var(--foreground)]"
-            title="Upload diagram image"
-          >
-            <Paperclip size={15} />
-            <span>{t("Upload")}</span>
-          </button>
-          <textarea
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void handleSend();
-              }
-            }}
-            placeholder={t("whiteboard.aiPanel.placeholder")}
-            rows={2}
-            className="min-h-[40px] flex-1 resize-none bg-transparent px-3 py-0 text-[12.5px] text-[var(--foreground)] placeholder:text-[var(--muted-foreground)] focus:outline-none"
-          />
-          <button
+            type="button"
             onClick={() => void handleSend()}
             disabled={loading || !input.trim()}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] disabled:opacity-40"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-40"
             aria-label={t("Send")}
           >
-            <ArrowUp size={15} />
+            <ArrowUp size={15} strokeWidth={2.25} />
           </button>
         </div>
       </div>

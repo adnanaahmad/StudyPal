@@ -1558,7 +1558,7 @@ export default function PlaygroundPage() {
     <div className="min-h-screen bg-[var(--background)]">
       <div className="mx-auto max-w-5xl px-6 py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--foreground)]">{t("Playground")}</h1>
+          <h1 className="text-[24px] font-semibold tracking-tight text-[var(--foreground)]">{t("Playground")}</h1>
           <p className="mt-1 text-[13px] text-[var(--muted-foreground)]">
             {t("Explore the building blocks of StudyPal: reusable tools and higher-level capabilities.")}
           </p>
