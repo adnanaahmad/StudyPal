@@ -435,7 +435,7 @@ export default function ExamSimulatorPage() {
             <ClipboardList size={14} strokeWidth={2.5} />
             <span className="text-[11px] font-bold uppercase tracking-wider">{t("Workshop")}</span>
           </div>
-          <h1 className="font-serif text-2xl font-medium tracking-tight text-[var(--foreground)]">
+          <h1 className="text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
             {t("Exam Simulator")}
           </h1>
         </div>
@@ -516,7 +516,9 @@ export default function ExamSimulatorPage() {
                   <div className="w-20 h-20 bg-emerald-500/10 rounded-[32px] flex items-center justify-center mx-auto mb-6 shadow-inner">
                     <Sparkles className="w-10 h-10 text-emerald-600" />
                   </div>
-                  <h2 className="font-serif text-3xl font-medium mb-3">{t("Start an Exam Session")}</h2>
+                  <h2 className="text-[28px] md:text-[30px] font-semibold tracking-tight mb-3 text-[var(--foreground)]">
+                    {t("Start an Exam Session")}
+                  </h2>
                   <p className="text-slate-500 dark:text-slate-400 text-sm">{t("Challenge yourself with AI-generated questions tailored to your goals.")}</p>
                 </div>
 

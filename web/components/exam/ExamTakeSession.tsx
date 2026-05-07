@@ -162,10 +162,8 @@ export function ExamTakeSession({
   return (
     <div
       ref={containerRef}
-      className={`exam-take-root space-y-4 bg-[var(--card)] p-4 md:p-8 ${
-        isFullscreen
-          ? "mt-0 min-h-full rounded-none border-0 shadow-none"
-          : "mt-8 rounded-[32px] border border-[var(--border)] shadow-xl shadow-slate-200/50 dark:shadow-none"
+      className={`exam-take-root space-y-4 bg-transparent p-4 md:p-6 lg:px-8 ${
+        isFullscreen ? "mt-0 min-h-full md:p-8" : ""
       }`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">

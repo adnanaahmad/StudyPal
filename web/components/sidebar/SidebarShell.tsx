@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   BookOpen,
   Bot,
@@ -39,6 +39,7 @@ const PRIMARY_NAV: NavEntry[] = [
 
 const SECONDARY_NAV: NavEntry[] = [{ href: "/settings", label: "Settings", icon: Settings }];
 const DEFAULT_SESSION_VIEWPORT_CLASS_NAME = "max-h-[112px]";
+export const SIDEBAR_COLLAPSE_EVENT = "deeptutor:sidebar-collapse";
 
 interface SidebarShellProps {
   sessions?: SessionSummary[];
@@ -69,6 +70,17 @@ export function SidebarShell({
   const router = useRouter();
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onSidebarCollapse = () => setCollapsed(true);
+    window.addEventListener(SIDEBAR_COLLAPSE_EVENT, onSidebarCollapse);
+
+    return () => {
+      window.removeEventListener(SIDEBAR_COLLAPSE_EVENT, onSidebarCollapse);
+    };
+  }, []);
 
   const handleNewChat = () => {
     if (onNewChat) {

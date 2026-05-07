@@ -21,30 +21,22 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import { SIDEBAR_COLLAPSE_EVENT } from "@/components/sidebar/SidebarShell";
 
 /* ── Types & Constants ── */
 
 type TimerMode = "focus" | "shortBreak" | "longBreak";
 
-const MODES: Record<TimerMode, { label: string; duration: number; color: string; bg: string }> = {
-  focus: { 
-    label: "Focus", 
-    duration: 25 * 60, 
-    color: "#fd8a8a", 
-    bg: "transparent"
-  },
-  shortBreak: { 
-    label: "Short Break", 
-    duration: 5 * 60, 
-    color: "oklch(65% 0.1 180)", // Subtle teal
-    bg: "transparent"
-  },
-  longBreak: { 
-    label: "Long Break", 
-    duration: 15 * 60, 
-    color: "oklch(65% 0.1 260)", // Subtle blue/indigo
-    bg: "transparent"
-  }
+const TIMER_DISPLAY_CLASS: Record<TimerMode, string> = {
+  focus: "text-primary",
+  shortBreak: "timer-display timer-display--short",
+  longBreak: "timer-display timer-display--long",
+};
+
+const MODES: Record<TimerMode, { label: string; duration: number }> = {
+  focus: { label: "Focus", duration: 25 * 60 },
+  shortBreak: { label: "Short Break", duration: 5 * 60 },
+  longBreak: { label: "Long Break", duration: 15 * 60 },
 };
 
 interface Task {
@@ -95,6 +87,22 @@ export default function FocusPage() {
     if (timerRef.current) clearInterval(timerRef.current);
   }, []);
 
+  const handleTimerComplete = useCallback(() => {
+    const audio = new Audio("https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3");
+    void audio.play();
+
+    if (mode === "focus") {
+      setPomodorosCompleted((prev) => {
+        const completed = prev + 1;
+        if (completed % 4 === 0) switchMode("longBreak");
+        else switchMode("shortBreak");
+        return completed;
+      });
+    } else {
+      switchMode("focus");
+    }
+  }, [mode, switchMode]);
+
   useEffect(() => {
     if (isActive && timeLeft > 0) {
       timerRef.current = setInterval(() => {
@@ -109,25 +117,12 @@ export default function FocusPage() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isActive, timeLeft]);
-
-  const handleTimerComplete = () => {
-    const audio = new Audio("https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3");
-    audio.play();
-
-    if (mode === "focus") {
-      setPomodorosCompleted((prev) => prev + 1);
-      if ((pomodorosCompleted + 1) % 4 === 0) {
-        switchMode("longBreak");
-      } else {
-        switchMode("shortBreak");
-      }
-    } else {
-      switchMode("focus");
-    }
-  };
+  }, [handleTimerComplete, isActive, timeLeft]);
 
   const toggleTimer = () => {
+    if (!isActive && typeof window !== "undefined") {
+      window.dispatchEvent(new Event(SIDEBAR_COLLAPSE_EVENT));
+    }
     setIsActive(!isActive);
   };
 
@@ -203,7 +198,7 @@ export default function FocusPage() {
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-white dark:bg-slate-950 animate-fade-in relative selection:bg-primary/20">
+    <div className="flex h-full flex-col overflow-hidden bg-[var(--focus-canvas)] animate-fade-in relative selection:bg-primary/20">
       {/* Background stays clean as per request */}
       <div className="absolute inset-0 z-0 overflow-hidden opacity-[0.03] pointer-events-none">
         <motion.div 
@@ -214,13 +209,13 @@ export default function FocusPage() {
       </div>
 
       {/* Header Section */}
-      <div className="relative z-20 flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md">
+      <div className="relative z-20 flex items-center justify-between px-8 py-6 border-b border-[var(--border)] bg-[var(--card)]/80 backdrop-blur-md">
         <div className="flex flex-col items-start gap-1">
-          <div className="flex items-center gap-2 rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-slate-600 dark:text-slate-400">
-            <TimerIcon size={14} strokeWidth={2.5} />
+          <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-[var(--muted-foreground)]">
+            <TimerIcon size={14} strokeWidth={2.5} className="text-primary" />
             <span className="text-[11px] font-bold uppercase tracking-wider">{t("Workshop")}</span>
           </div>
-          <h1 className="font-serif text-2xl font-medium tracking-tight text-[var(--foreground)]">
+          <h1 className="text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
             {t("Focus Mode")}
           </h1>
         </div>
@@ -233,7 +228,7 @@ export default function FocusPage() {
         </div>
       </div>
 
-      <div className="relative z-10 flex-1 flex flex-col lg:flex-row gap-8 px-8 pb-8 overflow-hidden">
+      <div className="relative z-10 flex-1 flex flex-col lg:flex-row gap-8 px-8 pb-8 pt-6 overflow-hidden">
         
         {/* Main Timer Column */}
         <div className="flex-1 flex flex-col items-center justify-center relative min-h-0">
@@ -244,9 +239,9 @@ export default function FocusPage() {
               <button
                 key={m}
                 onClick={() => switchMode(m)}
-                className={`px-5 py-2 rounded-xl text-[13px] font-bold transition-all duration-300 ${
+                className={`px-5 py-2 rounded-xl text-[13px] font-semibold transition-all duration-300 ${
                   mode === m 
-                    ? "bg-[var(--foreground)] text-[var(--background)] shadow-md" 
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" 
                     : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--secondary)]"
                 }`}
               >
@@ -265,19 +260,21 @@ export default function FocusPage() {
                    value={editValue}
                    onChange={(e) => setEditValue(e.target.value)}
                    onBlur={handleEditSubmit}
-                   className="w-64 text-[120px] md:text-[160px] font-light tabular-nums tracking-tighter text-center bg-transparent border-none outline-none text-[var(--foreground)]"
+                   className={`w-64 text-[120px] md:text-[160px] font-light tabular-nums tracking-tighter text-center bg-transparent border-none outline-none ${mode === "focus" ? "text-primary" : "text-[var(--foreground)]"}`}
                  />
                  <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-30 -mt-4">Set Minutes</span>
                </form>
              ) : (
                <motion.div
-                 initial={false}
-                 animate={{ color: MODES[mode].color }}
+                 key={mode}
+                 initial={{ opacity: 0.92, scale: 0.985 }}
+                 animate={{ opacity: 1, scale: 1 }}
+                 transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                  onClick={() => {
                    setEditValue(Math.floor(timeLeft / 60).toString());
                    setIsEditing(true);
                  }}
-                 className="text-[120px] md:text-[160px] font-light tabular-nums tracking-tighter cursor-text hover:opacity-80 transition-opacity leading-none"
+                 className={`text-[120px] md:text-[160px] font-light tabular-nums tracking-tighter cursor-text hover:brightness-105 dark:hover:brightness-110 transition-[filter] leading-none ${TIMER_DISPLAY_CLASS[mode]}`}
                >
                  {formatTime(timeLeft)}
                </motion.div>
@@ -294,12 +291,31 @@ export default function FocusPage() {
 
                 <button
                   onClick={toggleTimer}
-                  className="group relative flex items-center justify-center h-24 w-24 rounded-full bg-[var(--foreground)] text-[var(--background)] transition-all hover:scale-110 active:scale-95 shadow-xl shadow-slate-900/10 dark:shadow-none"
+                  className="group relative flex isolate items-center justify-center h-24 w-24 rounded-full bg-primary text-primary-foreground transition-transform hover:scale-105 hover:brightness-105 active:scale-[0.98] shadow-xl shadow-primary/30"
+                  aria-label={isActive ? t("Pause") : t("Start")}
                 >
-                   {isActive ? <Pause className="h-10 w-10 fill-current" /> : <Play className="h-10 w-10 fill-current ml-1" />}
+                  {!isActive && (
+                    <>
+                      <motion.span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-[-6px] rounded-full border border-primary/45"
+                        animate={{ scale: [1, 1.35], opacity: [0.55, 0] }}
+                        transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut" }}
+                      />
+                      <motion.span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-[-6px] rounded-full border border-primary/25"
+                        animate={{ scale: [1, 1.48], opacity: [0.35, 0] }}
+                        transition={{ duration: 2.2, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
+                      />
+                    </>
+                  )}
+                   <span className="relative z-10">
+                     {isActive ? <Pause className="h-10 w-10 fill-current" /> : <Play className="h-10 w-10 fill-current ml-1" />}
+                   </span>
                 </button>
 
-                <div className="p-4 rounded-full bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] shadow-sm">
+                <div className="p-4 rounded-full bg-[var(--card)] text-[var(--muted-foreground)] border border-[var(--border)] shadow-sm">
                    <Brain className="h-6 w-6" />
                 </div>
              </div>
@@ -330,11 +346,11 @@ export default function FocusPage() {
                   placeholder="What's your next win?"
                   value={newTaskText}
                   onChange={(e) => setNewTaskText(e.target.value)}
-                  className="w-full pl-5 pr-12 py-3 rounded-2xl bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-4 focus:ring-[var(--foreground)]/5 transition-all text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]/50"
+                  className="w-full pl-5 pr-12 py-3 rounded-2xl bg-[var(--background)] border border-[var(--border)] focus:outline-none focus:ring-4 focus:ring-primary/15 transition-all text-sm text-[var(--foreground)] placeholder:text-[var(--muted-foreground)]/50"
                 />
                 <button
                   type="submit"
-                  className="absolute right-1.5 top-1.5 p-1.5 rounded-xl bg-[var(--foreground)] text-[var(--background)] hover:scale-105 active:scale-95 transition-all shadow-sm"
+                  className="absolute right-1.5 top-1.5 p-1.5 rounded-xl bg-primary text-primary-foreground hover:opacity-95 hover:scale-105 active:scale-95 transition-all shadow-sm"
                 >
                   <Plus className="h-5 w-5" />
                 </button>
@@ -409,7 +425,7 @@ export default function FocusPage() {
                   onClick={() => setCurrentSound(currentSound?.id === s.id ? null : s)}
                   className={`flex flex-col items-center gap-2 p-2.5 rounded-2xl transition-all ${
                     currentSound?.id === s.id 
-                      ? "bg-[var(--foreground)] text-[var(--background)] shadow-lg shadow-slate-900/10 dark:shadow-none" 
+                      ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" 
                       : "bg-[var(--background)] text-[var(--muted-foreground)] hover:text-[var(--foreground)] border border-[var(--border)]"
                   }`}
                 >
@@ -426,14 +442,14 @@ export default function FocusPage() {
                 <span>Volume</span>
                 <span className="tabular-nums">{Math.round(volume * 100)}%</span>
               </div>
-              <input 
-                type="range" 
-                min="0" 
-                max="1" 
-                step="0.01" 
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
                 value={volume}
                 onChange={(e) => setVolume(parseFloat(e.target.value))}
-                className="w-full h-1 bg-[var(--secondary)] rounded-full appearance-none cursor-pointer accent-[var(--foreground)]"
+                className="focus-volume-range h-6 w-full cursor-pointer bg-transparent accent-primary"
               />
             </div>
           </div>
@@ -455,6 +471,45 @@ export default function FocusPage() {
         }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb {
           background: rgba(255,255,255,0.05);
+        }
+
+        /* appearance-none removes native track — paint it explicitly (WebKit + Firefox) */
+        .focus-volume-range {
+          -webkit-appearance: none;
+          appearance: none;
+        }
+
+        .focus-volume-range::-webkit-slider-runnable-track {
+          height: 4px;
+          border-radius: 9999px;
+          background: var(--border);
+        }
+
+        .focus-volume-range::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 16px;
+          height: 16px;
+          margin-top: -6px;
+          border-radius: 50%;
+          background: var(--primary);
+          border: 2px solid var(--card);
+          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
+        }
+
+        .focus-volume-range::-moz-range-track {
+          height: 4px;
+          border-radius: 9999px;
+          background: var(--border);
+        }
+
+        .focus-volume-range::-moz-range-thumb {
+          width: 14px;
+          height: 14px;
+          border: 2px solid var(--card);
+          border-radius: 50%;
+          background: var(--primary);
+          box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
         }
       `}</style>
     </div>
