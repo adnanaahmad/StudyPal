@@ -208,22 +208,26 @@ export default function FocusPage() {
         />
       </div>
 
-      {/* Header Section */}
-      <div className="relative z-20 flex items-center justify-between px-8 py-6 border-b border-[var(--border)] bg-[var(--card)]/80 backdrop-blur-md">
-        <div className="flex flex-col items-start gap-1">
-          <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-[var(--muted-foreground)]">
-            <TimerIcon size={14} strokeWidth={2.5} className="text-primary" />
-            <span className="text-[11px] font-bold uppercase tracking-wider">{t("Workshop")}</span>
-          </div>
-          <h1 className="text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
+      {/* Header — single row */}
+      <div className="relative z-20 flex shrink-0 items-center justify-between border-b border-slate-100 bg-white/50 px-4 py-2 dark:border-slate-800 dark:bg-slate-900/50 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2">
+          <TimerIcon
+            size={18}
+            strokeWidth={2}
+            className="shrink-0 text-primary"
+            aria-hidden
+          />
+          <h1 className="truncate text-[17px] font-semibold tracking-tight text-[var(--foreground)]">
             {t("Focus Mode")}
           </h1>
         </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 rounded-2xl bg-[var(--card)] border border-[var(--border)] px-4 py-2 shadow-sm">
+
+        <div className="flex shrink-0 items-center gap-4">
+          <div className="flex items-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--card)] px-4 py-2 shadow-sm">
             <CheckCircle2 size={16} className="text-emerald-500" />
-            <span className="text-xs font-bold tabular-nums text-[var(--foreground)]">#{pomodorosCompleted} Sessions</span>
+            <span className="text-xs font-bold tabular-nums text-[var(--foreground)]">
+              #{pomodorosCompleted} Sessions
+            </span>
           </div>
         </div>
       </div>

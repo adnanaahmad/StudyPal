@@ -140,13 +140,13 @@ export default function PodcastsPage() {
         <button 
           type="button"
           onClick={() => setView('library')}
-          className={`flex shrink-0 items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all ${
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-opacity ${
             view === 'library' 
-              ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed" 
-              : "bg-blue-600 text-white shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95"
+              ? "bg-[var(--muted)] text-[var(--muted-foreground)] cursor-not-allowed opacity-60"
+              : "bg-blue-600 text-white hover:opacity-90"
           }`}
         >
-          <Plus size={16} />
+          <Plus size={14} />
           {t("New Overview")}
         </button>
       </div>

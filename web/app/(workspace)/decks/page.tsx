@@ -100,9 +100,9 @@ export default function DecksPage() {
         <button 
           type="button"
           onClick={() => {}} // Could scroll to form or focus
-          className="flex shrink-0 items-center gap-2 rounded-xl bg-amber-600 px-4 py-2 text-sm font-bold text-white shadow-lg shadow-amber-500/20 transition-all hover:scale-105 active:scale-95"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-amber-600 px-3 py-1 text-xs font-medium text-white transition-opacity hover:opacity-90"
         >
-          <Plus size={16} />
+          <Plus size={14} />
           {t("New Deck")}
         </button>
       </div>
