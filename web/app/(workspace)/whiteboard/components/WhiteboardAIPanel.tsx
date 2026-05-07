@@ -12,7 +12,7 @@ interface Message {
 
 interface WhiteboardAIPanelProps {
   sessionId: string | null;
-  getCurrentXml: () => void;
+  getCurrentXml: () => Promise<string>;
   onXmlGenerated: (xml: string) => void;
   pendingXmlRef: React.MutableRefObject<string | null>;
   onMessagesChange?: (messages: Message[]) => void;
@@ -52,8 +52,16 @@ export function WhiteboardAIPanel({
     setMessages((prev) => [...prev, { role: "user", content: prompt }]);
     setLoading(true);
 
-    // The current XML is now always kept up to date in the ref by the parent page
-    const currentXml = pendingXmlRef.current ?? "";
+    let currentXml = pendingXmlRef.current ?? "";
+    try {
+      // Capture a fresh canvas snapshot right before sending.
+      const latestXml = await getCurrentXml();
+      if (latestXml) {
+        currentXml = latestXml;
+      }
+    } catch {
+      // Fall back to the last known XML in-memory if snapshot capture fails.
+    }
 
     try {
       const res = await fetch(apiUrl("/api/v1/whiteboard/generate"), {

@@ -16,6 +16,7 @@ interface UseDrawioCanvasOptions {
 
 export function useDrawioCanvas({ onInit, onChange, onExport }: UseDrawioCanvasOptions = {}) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const xmlExportResolversRef = useRef<Array<(xml: string) => void>>([]);
 
   const postMessage = useCallback((msg: Record<string, unknown>) => {
     iframeRef.current?.contentWindow?.postMessage(JSON.stringify(msg), "*");
@@ -30,6 +31,27 @@ export function useDrawioCanvas({ onInit, onChange, onExport }: UseDrawioCanvasO
 
   const getXml = useCallback(() => {
     postMessage({ action: "export", format: "xml" });
+  }, [postMessage]);
+
+  const requestCurrentXml = useCallback(() => {
+    return new Promise<string>((resolve) => {
+      let settled = false;
+      const timeoutId = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        resolve("");
+      }, 1500);
+
+      const resolver = (xml: string) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeoutId);
+        resolve(xml);
+      };
+
+      xmlExportResolversRef.current.push(resolver);
+      postMessage({ action: "export", format: "xml" });
+    });
   }, [postMessage]);
 
   const exportSvg = useCallback(() => {
@@ -47,11 +69,19 @@ export function useDrawioCanvas({ onInit, onChange, onExport }: UseDrawioCanvasO
       }
       if (data.event === "init") onInit?.();
       if (data.event === "change") onChange?.(data.xml);
-      if (data.event === "export") onExport?.(data.data, data.format);
+      if (data.event === "export") {
+        if (data.format === "xml" && xmlExportResolversRef.current.length > 0) {
+          const resolvers = xmlExportResolversRef.current.splice(0);
+          for (const resolver of resolvers) {
+            resolver(data.data ?? "");
+          }
+        }
+        onExport?.(data.data, data.format);
+      }
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
   }, [onInit, onChange, onExport]);
 
-  return { iframeRef, loadXml, getXml, exportSvg };
+  return { iframeRef, loadXml, getXml, requestCurrentXml, exportSvg };
 }

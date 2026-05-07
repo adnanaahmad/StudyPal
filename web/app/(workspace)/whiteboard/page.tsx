@@ -74,7 +74,7 @@ export default function WhiteboardPage() {
 
   const canvasReadyRef = useRef(false);
 
-  const { iframeRef, loadXml, getXml, exportSvg } = useDrawioCanvas({
+  const { iframeRef, loadXml, getXml, requestCurrentXml, exportSvg } = useDrawioCanvas({
     onInit: () => {
       canvasReadyRef.current = true;
       loadXml(initialXmlRef.current ?? "");
@@ -228,7 +228,7 @@ export default function WhiteboardPage() {
         <div className="flex h-full min-h-0 w-[400px] shrink-0 flex-col border-l border-[var(--border)] bg-[var(--card)]">
           <WhiteboardAIPanel
             sessionId={selectedSessionId}
-            getCurrentXml={getXml}
+            getCurrentXml={requestCurrentXml}
             onXmlGenerated={handleXmlGenerated}
             pendingXmlRef={pendingXmlRef}
             onMessagesChange={setPanelMessages}

@@ -135,10 +135,14 @@ async def generate_diagram(request: GenerateRequest) -> GenerateResponse:
 
     # Clean up and repair JSON
     json_text = raw.strip()
-    if json_text.startswith("```"):
-        match = re.search(r"```(?:json)?\s*(\{.*?\})", json_text, re.DOTALL | re.IGNORECASE)
-        if match:
-            json_text = match.group(1).strip()
+    # Extract JSON robustly from fenced blocks or mixed reasoning/text responses.
+    code_block_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", json_text, re.DOTALL | re.IGNORECASE)
+    if code_block_match:
+        json_text = code_block_match.group(1).strip()
+    elif not json_text.startswith("{"):
+        bare_match = re.search(r"(\{.*\})", json_text, re.DOTALL)
+        if bare_match:
+            json_text = bare_match.group(1).strip()
 
     try:
         from json_repair import repair_json
