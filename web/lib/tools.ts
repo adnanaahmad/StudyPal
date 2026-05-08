@@ -1,4 +1,5 @@
 import {
+  CalendarClock,
   GraduationCap,
   Headphones,
   Layers,
@@ -21,6 +22,14 @@ export interface ToolDefinition {
 }
 
 export const TOOLS: ToolDefinition[] = [
+  {
+    id: "planner",
+    href: "/planner",
+    label: "Study Planner",
+    description: "Build adaptive weekly study plans that reflow around your schedule and goals.",
+    icon: CalendarClock,
+    category: "Productivity",
+  },
   {
     id: "focus",
     href: "/focus",
