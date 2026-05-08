@@ -60,27 +60,6 @@ export function MindmapCanvas({ markdown }: MindmapCanvasProps) {
 
   return (
     <div className="relative flex-1 overflow-hidden bg-[var(--background)]">
-      {!markdown && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-[var(--muted-foreground)]">
-          <svg
-            width="48"
-            height="48"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.2"
-            className="opacity-30"
-          >
-            <circle cx="12" cy="5" r="2" />
-            <circle cx="5" cy="19" r="2" />
-            <circle cx="19" cy="19" r="2" />
-            <line x1="12" y1="7" x2="5" y2="17" />
-            <line x1="12" y1="7" x2="19" y2="17" />
-          </svg>
-          <p className="text-[13px]">Your mindmap will appear here</p>
-        </div>
-      )}
-
       <svg
         ref={svgRef}
         className="h-full w-full"

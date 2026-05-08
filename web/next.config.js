@@ -15,6 +15,9 @@ const nextConfig = {
 
   // Turbopack configuration (used when running `npm run dev:turbo`)
   turbopack: {
+    // Pin the workspace root to web/ so Turbopack ignores docs/package-lock.json
+    // (VitePress for the docs site) and stops emitting the multi-lockfile warning.
+    root: __dirname,
     resolveAlias: {
       // Fix for mermaid's cytoscape dependency - use CJS version
       cytoscape: "cytoscape/dist/cytoscape.cjs.js",

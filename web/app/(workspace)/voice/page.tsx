@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ArrowLeft, Mic, MicOff, PhoneOff, Play, Bot, Loader2, Signal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,6 +11,14 @@ import { apiUrl } from "@/lib/api";
 /* ── Main Component ── */
 
 export default function VoicePage() {
+  return (
+    <Suspense fallback={<VoicePageFallback />}>
+      <VoicePageContent />
+    </Suspense>
+  );
+}
+
+function VoicePageContent() {
   const [isStarted, setIsStarted] = useState(false);
   const searchParams = useSearchParams();
   const botId = searchParams.get("bot_id");
@@ -39,6 +47,14 @@ export default function VoicePage() {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+function VoicePageFallback() {
+  return (
+    <div className="flex h-screen w-full items-center justify-center bg-[var(--background)] text-[var(--muted-foreground)]">
+      Loading voice session...
+    </div>
   );
 }
 
