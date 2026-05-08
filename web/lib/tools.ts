@@ -1,6 +1,7 @@
 import {
   GraduationCap,
   Headphones,
+  Layers,
   ListChecks,
   Network,
   PenLine,
@@ -72,8 +73,16 @@ export const TOOLS: ToolDefinition[] = [
     id: "decks",
     href: "/decks",
     label: "Decks",
-    description: "Master vocabulary and concepts with interactive AI-powered flashcards.",
+    description: "Turn notes and topics into polished slide presentations.",
     icon: Presentation,
+    category: "Creative",
+  },
+  {
+    id: "flashcards",
+    href: "/flashcards",
+    label: "Flashcards",
+    description: "Generate AI-powered flashcards on any topic and self-grade as you go.",
+    icon: Layers,
     category: "Practice",
   },
   {

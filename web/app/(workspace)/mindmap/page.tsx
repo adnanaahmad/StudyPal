@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CopilotSidebar } from "@copilotkit/react-ui";
 import { Brain, Copy, GitBranch, Sparkles } from "lucide-react";
+import { useCopilotSidebarSessionKey } from "@/hooks/useClearCopilotChatOnUnmount";
 import { MindmapToolbar } from "./components/MindmapToolbar";
 import { useMindmapState } from "./hooks/useMindmapState";
 import { useMindmapAgent } from "./hooks/useMindmapAgent";
@@ -18,6 +19,7 @@ export default function MindmapPage() {
   const { t } = useTranslation();
   const api = useMindmapState();
   useMindmapAgent(api);
+  const copilotSidebarKey = useCopilotSidebarSessionKey();
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
 
   const isEmpty = !api.state.rootId;
@@ -105,8 +107,9 @@ export default function MindmapPage() {
 
         <div className="mindmap-chat-clean">
           <CopilotSidebar
+            key={copilotSidebarKey}
             defaultOpen={false}
-            clickOutsideToClose={true}
+            clickOutsideToClose={false}
             labels={{
               title: '',
               initial: t("Hi! Tell me a topic and I'll start building a map for you."),

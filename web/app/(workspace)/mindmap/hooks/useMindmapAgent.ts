@@ -1,6 +1,7 @@
 "use client";
 
 import { useCopilotAdditionalInstructions, useCopilotReadable, useFrontendTool } from "@copilotkit/react-core";
+import { useClearCopilotChatOnUnmount } from "@/hooks/useClearCopilotChatOnUnmount";
 import type { MindmapApi } from "./useMindmapState";
 
 const TUTOR_INSTRUCTIONS = `
@@ -59,6 +60,12 @@ Style:
  */
 export function useMindmapAgent(api: MindmapApi) {
   const { state } = api;
+
+  // The CopilotKit provider lives at the workspace layout level, so its chat
+  // thread survives navigation by default. The mindmap state itself resets on
+  // remount, so wipe the chat alongside it — no orphan turns referencing a
+  // map that no longer exists.
+  useClearCopilotChatOnUnmount();
 
   // Make the live map visible to the agent on every turn so it doesn't add duplicate
   // nodes or refer to ids that no longer exist.
