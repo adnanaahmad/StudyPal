@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useAgent } from "@copilotkit/react-core/v2";
 
 /**
@@ -79,5 +79,9 @@ export function useClearCopilotChatOnUnmount() {
 
 /** One id per workspace tool page mount — pass as `key` on `CopilotSidebar`. */
 export function useCopilotSidebarSessionKey(): string {
-  return useMemo(() => makeThreadId(), []);
+  const [key, setKey] = useState("");
+  useEffect(() => {
+    setKey(makeThreadId());
+  }, []);
+  return key;
 }

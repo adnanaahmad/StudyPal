@@ -70,8 +70,10 @@ export function SidebarShell({
   const router = useRouter();
   const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (typeof window === "undefined") return;
 
     const onSidebarCollapse = () => setCollapsed(true);
@@ -89,6 +91,12 @@ export function SidebarShell({
     }
     router.push("/");
   };
+
+  if (!mounted) {
+    return (
+      <aside className={`flex ${collapsed ? "w-[56px]" : "w-[220px]"} h-screen shrink-0 bg-[var(--secondary)] transition-all duration-200`} />
+    );
+  }
 
   /* ---- Collapsed state ---- */
   if (collapsed) {
@@ -158,9 +166,9 @@ export function SidebarShell({
 
   /* ---- Expanded state ---- */
   return (
-    <aside className="flex w-[220px] h-screen shrink-0 flex-col bg-[var(--secondary)] transition-all duration-200">
+    <aside suppressHydrationWarning className="flex w-[220px] h-screen shrink-0 flex-col bg-[var(--secondary)] transition-all duration-200">
       {/* Header: logo + collapse toggle */}
-      <div className="flex h-12 items-center justify-between px-4">
+      <div suppressHydrationWarning className="flex h-12 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
           <Image src="/studypal_book_icon.svg" alt="StudyPal" width={50} height={10} />
           <span className="text-[15px] font-semibold tracking-tight text-[var(--foreground)] align-center mt-1">
@@ -178,7 +186,7 @@ export function SidebarShell({
 
       {/* Primary nav */}
       <nav className="px-2 pt-1">
-        <div className="space-y-px">
+        <div suppressHydrationWarning className="space-y-px">
           {/* New chat */}
           <button
             onClick={handleNewChat}
@@ -226,10 +234,10 @@ export function SidebarShell({
       </nav>
 
       {/* Spacer */}
-      <div className="flex-1" />
+      <div suppressHydrationWarning className="flex-1" />
 
       {/* Secondary nav + footer */}
-      <div className="border-t border-[var(--border)]/40 px-2 py-2">
+      <div suppressHydrationWarning className="border-t border-[var(--border)]/40 px-2 py-2">
         {SECONDARY_NAV.map((item) => {
           const active = pathname.startsWith(item.href);
           return (

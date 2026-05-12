@@ -11,7 +11,7 @@ export default function WorkspaceLayout({
   return (
     <CopilotKit runtimeUrl="/api/copilotkit">
       <UnifiedChatProvider>
-        <div className="flex h-screen overflow-hidden">
+        <div suppressHydrationWarning className="flex h-screen overflow-hidden">
           <WorkspaceSidebar />
           <main className="flex-1 overflow-hidden bg-[var(--background)]">{children}</main>
         </div>

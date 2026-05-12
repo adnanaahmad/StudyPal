@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CopilotSidebar } from "@copilotkit/react-ui";
 import { CalendarClock, CheckCircle2, Clock3, Copy, Flame, Sparkles } from "lucide-react";
@@ -8,7 +8,6 @@ import { useCopilotSidebarSessionKey } from "@/hooks/useClearCopilotChatOnUnmoun
 import { usePlannerAgent } from "./hooks/usePlannerAgent";
 import { usePlannerState } from "./hooks/usePlannerState";
 
-const todayISO = (): string => new Date().toISOString().slice(0, 10);
 
 export default function PlannerPage() {
   const { t } = useTranslation();
@@ -18,7 +17,12 @@ export default function PlannerPage() {
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
 
   const isEmpty = api.state.taskOrder.length === 0;
-  const today = todayISO();
+  const [today, setToday] = useState("");
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setToday(new Date().toISOString().slice(0, 10));
+    setMounted(true);
+  }, []);
   const tasks = useMemo(() => api.state.taskOrder.map((id) => api.state.tasks[id]), [api.state]);
   const todayTasks = useMemo(() => tasks.filter((task) => task.date === today), [tasks, today]);
   const completedToday = todayTasks.filter((task) => task.status === "completed").length;
@@ -43,9 +47,9 @@ export default function PlannerPage() {
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-[var(--background)]">
-      <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3 md:px-6">
-        <div className="min-w-0">
+    <div suppressHydrationWarning className="flex h-full flex-col overflow-hidden bg-[var(--background)]">
+      <div suppressHydrationWarning className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3 md:px-6">
+        <div suppressHydrationWarning className="min-w-0">
           <h1 className="truncate text-base font-semibold text-[var(--foreground)]">
             {t("Study Planner")}
           </h1>
@@ -61,8 +65,12 @@ export default function PlannerPage() {
         </button>
       </div>
 
-      <div className="relative flex flex-1 overflow-hidden">
-        <div className="flex flex-1 flex-col overflow-y-auto p-4 md:p-6">
+      <div suppressHydrationWarning className="relative flex flex-1 overflow-hidden">
+        {!mounted ? (
+          <div suppressHydrationWarning className="flex-1 animate-pulse bg-[var(--background)]" />
+        ) : (
+          <>
+            <div className="flex flex-1 flex-col overflow-y-auto p-4 md:p-6">
           <div className="grid gap-3 md:grid-cols-3">
             <MetricCard
               icon={CalendarClock}
@@ -223,7 +231,9 @@ export default function PlannerPage() {
               placeholder: t("Ask me to create, rebalance, or optimize your study week..."),
             }}
           />
-        </div>
+            </div>
+          </>
+        )}
       </div>
 
       <style jsx global>{`
@@ -265,7 +275,7 @@ function MetricCard({
   subtext: string;
 }) {
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)]/80 p-3">
+    <div suppressHydrationWarning className="rounded-xl border border-[var(--border)] bg-[var(--card)]/80 p-3">
       <div className="flex items-center gap-2 text-[var(--muted-foreground)]">
         <Icon size={14} />
         <p className="text-[11px] font-medium">{label}</p>
@@ -286,7 +296,7 @@ function MiniFeature({
   text: string;
 }) {
   return (
-    <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
+    <div suppressHydrationWarning className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
       <Icon size={15} className="mb-1 text-[var(--primary)]" />
       <p className="text-xs font-medium text-[var(--foreground)]">{title}</p>
       <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">{text}</p>
