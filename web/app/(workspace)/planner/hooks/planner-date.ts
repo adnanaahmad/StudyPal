@@ -1,6 +1,6 @@
 export const isoToday = (): string => new Date().toISOString().slice(0, 10);
 
-const MAX_ALLOWED_PAST_DAYS = 30;
+const MAX_ALLOWED_PAST_DAYS = 0;
 
 const parseISODate = (value: string): Date | null => {
   const trimmed = value.trim();

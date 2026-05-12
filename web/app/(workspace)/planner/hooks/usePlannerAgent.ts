@@ -1,4 +1,5 @@
 "use client";
+import { useMemo } from "react";
 
 import {
   useCopilotAdditionalInstructions,
@@ -13,7 +14,7 @@ import type {
   StudyTaskStatus,
 } from "./usePlannerState";
 
-const TUTOR_INSTRUCTIONS = `
+const BASE_INSTRUCTIONS = `
 You are a planning coach building a concrete weekly study plan for the student.
 
 The plan is a shared artifact. Use tools to create/update tasks instead of
@@ -36,6 +37,9 @@ Workflow:
 5) Use planner_update_task / planner_complete_task as user progresses.
 6) Date rule: Always set task dates relative to today; never use stale historical
    dates from examples. Prefer today/tomorrow and upcoming calendar days.
+7) Appending rule: When adding new tasks to an existing plan, schedule them
+   starting from the day after the LATEST existing task date, unless the user
+   explicitly asks for a different start day.
 
 Style:
 - Be concise and practical.
@@ -57,6 +61,7 @@ export function usePlannerAgent(api: PlannerApi) {
       description:
         "CURRENT_PLAN — live study planner state. Read before deciding which tasks to add, edit, or complete.",
       value: {
+        today: new Date().toISOString().slice(0, 10),
         goal: state.goal,
         examDate: state.examDate,
         weeklyMinutesGoal: state.weeklyMinutesGoal,
@@ -69,7 +74,11 @@ export function usePlannerAgent(api: PlannerApi) {
     [state],
   );
 
-  useCopilotAdditionalInstructions({ instructions: TUTOR_INSTRUCTIONS });
+  const instructions = useMemo(
+    () => `${BASE_INSTRUCTIONS}\n\nCURRENT_DATE: ${new Date().toISOString().slice(0, 10)}`,
+    [],
+  );
+  useCopilotAdditionalInstructions({ instructions });
 
   const unwrap = (raw: Record<string, unknown> | null | undefined): Record<string, unknown> => {
     const input = (raw ?? {}) as Record<string, unknown>;

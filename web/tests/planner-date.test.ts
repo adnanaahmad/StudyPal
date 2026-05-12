@@ -5,10 +5,10 @@ import {
   resolvePlannerTaskDate,
 } from "../app/(workspace)/planner/hooks/planner-date.ts";
 
-test("normalizePlannerDate keeps valid near-past date", () => {
+test("normalizePlannerDate converts even near-past date to today", () => {
   const today = "2026-05-08";
   const result = normalizePlannerDate("2026-05-07", today);
-  assert.equal(result, "2026-05-07");
+  assert.equal(result, today);
 });
 
 test("normalizePlannerDate converts very stale date to today", () => {
