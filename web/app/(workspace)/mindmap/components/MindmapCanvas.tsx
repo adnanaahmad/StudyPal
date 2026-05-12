@@ -5,9 +5,10 @@ import { Maximize2 } from "lucide-react";
 
 interface MindmapCanvasProps {
   markdown: string;
+  focusedId?: string | null;
 }
 
-export function MindmapCanvas({ markdown }: MindmapCanvasProps) {
+export function MindmapCanvas({ markdown, focusedId }: MindmapCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   // Store markmap instance so we can call fit/setData
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -50,16 +51,28 @@ export function MindmapCanvas({ markdown }: MindmapCanvasProps) {
       const transformer = new Transformer();
       const { root } = transformer.transform(markdown);
       mmRef.current.setData(root);
-      mmRef.current.fit();
+      
+      // Wait for the layout/animation to settle before fitting
+      setTimeout(() => {
+        mmRef.current?.fit();
+      }, 200);
     })();
   }, [markdown, ready]);
+
+  // Also fit when focus changes
+  useEffect(() => {
+    if (!ready || !mmRef.current || !focusedId) return;
+    setTimeout(() => {
+      mmRef.current?.fit();
+    }, 100);
+  }, [focusedId, ready]);
 
   const handleFit = () => {
     mmRef.current?.fit();
   };
 
   return (
-    <div className="relative flex-1 overflow-hidden bg-[var(--background)]">
+    <div suppressHydrationWarning className="relative flex-1 overflow-hidden bg-[var(--background)]">
       <svg
         ref={svgRef}
         className="h-full w-full"

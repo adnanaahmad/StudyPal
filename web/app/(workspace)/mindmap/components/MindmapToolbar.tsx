@@ -24,8 +24,8 @@ export function MindmapToolbar({ markdown, onNew, saveStatus }: MindmapToolbarPr
   };
 
   return (
-    <div className="flex h-10 shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--secondary)] px-4">
-      <div className="flex items-center gap-2">
+    <div suppressHydrationWarning className="flex h-10 shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--secondary)] px-4">
+      <div suppressHydrationWarning className="flex items-center gap-2">
         <FileText size={14} className="text-[var(--muted-foreground)]" />
         <span className="text-[15px] font-semibold tracking-tight text-[var(--foreground)]">
           {t("Mindmap")}
@@ -38,7 +38,7 @@ export function MindmapToolbar({ markdown, onNew, saveStatus }: MindmapToolbarPr
         )}
       </div>
 
-      <div className="flex items-center gap-1.5">
+      <div suppressHydrationWarning className="flex items-center gap-1.5">
         <button
           onClick={onNew}
           className="flex items-center gap-1.5 rounded-lg border border-[var(--border)]/50 px-2.5 py-1 text-[12px] font-medium text-[var(--muted-foreground)] transition-colors hover:border-[var(--border)] hover:text-[var(--foreground)]"

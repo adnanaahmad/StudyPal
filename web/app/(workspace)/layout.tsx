@@ -13,7 +13,7 @@ export default function WorkspaceLayout({
       <UnifiedChatProvider>
         <div suppressHydrationWarning className="flex h-screen overflow-hidden">
           <WorkspaceSidebar />
-          <main className="flex-1 overflow-hidden bg-[var(--background)]">{children}</main>
+          <main suppressHydrationWarning className="flex-1 overflow-hidden bg-[var(--background)]">{children}</main>
         </div>
       </UnifiedChatProvider>
     </CopilotKit>

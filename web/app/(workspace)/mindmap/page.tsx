@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CopilotSidebar } from "@copilotkit/react-ui";
 import { Brain, Copy, GitBranch, Sparkles } from "lucide-react";
@@ -21,6 +21,11 @@ export default function MindmapPage() {
   useMindmapAgent(api);
   const copilotSidebarKey = useCopilotSidebarSessionKey();
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isEmpty = !api.state.rootId;
   const starterPrompts = [
@@ -40,20 +45,20 @@ export default function MindmapPage() {
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-[var(--background)]">
+    <div suppressHydrationWarning className="flex h-full flex-col overflow-hidden bg-[var(--background)]">
       <MindmapToolbar markdown={api.markdown} onNew={api.reset} saveStatus="idle" />
 
-      <div className="relative flex flex-1 overflow-hidden">
-        <MindmapCanvas markdown={api.markdown} />
+      <div suppressHydrationWarning className="relative flex flex-1 overflow-hidden">
+        <MindmapCanvas markdown={api.markdown} focusedId={api.state.focusedId} />
 
         {isEmpty && (
-          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-6">
-            <div className="pointer-events-auto w-full max-w-2xl rounded-2xl border border-[var(--border)] bg-[var(--card)]/95 p-6 backdrop-blur-sm">
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--secondary)] text-[var(--primary)]">
+          <div suppressHydrationWarning className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center p-6">
+            <div suppressHydrationWarning className="pointer-events-auto w-full max-w-2xl rounded-2xl border border-[var(--border)] bg-[var(--card)]/95 p-6 backdrop-blur-sm">
+              <div suppressHydrationWarning className="flex items-start gap-4">
+                <div suppressHydrationWarning className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--secondary)] text-[var(--primary)]">
                   <Brain size={22} />
                 </div>
-                <div className="min-w-0 flex-1">
+                <div suppressHydrationWarning className="min-w-0 flex-1">
                   <h2 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
                     {t("Mindmap Workspace")}
                   </h2>
@@ -63,29 +68,29 @@ export default function MindmapPage() {
                 </div>
               </div>
 
-              <div className="mt-5 grid gap-2 sm:grid-cols-3">
-                <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
+              <div suppressHydrationWarning className="mt-5 grid gap-2 sm:grid-cols-3">
+                <div suppressHydrationWarning className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
                   <GitBranch size={15} className="mb-1 text-[var(--primary)]" />
                   <p className="text-xs font-medium text-[var(--foreground)]">{t("Build Branches")}</p>
                   <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">{t("Create clear topic trees from a root idea.")}</p>
                 </div>
-                <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
+                <div suppressHydrationWarning className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
                   <Sparkles size={15} className="mb-1 text-[var(--primary)]" />
                   <p className="text-xs font-medium text-[var(--foreground)]">{t("Learn Actively")}</p>
                   <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">{t("Mark weak and known nodes as you study.")}</p>
                 </div>
-                <div className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
+                <div suppressHydrationWarning className="rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
                   <Brain size={15} className="mb-1 text-[var(--primary)]" />
                   <p className="text-xs font-medium text-[var(--foreground)]">{t("Quiz by Node")}</p>
                   <p className="mt-1 text-[11px] text-[var(--muted-foreground)]">{t("Ask the tutor to test any branch instantly.")}</p>
                 </div>
               </div>
 
-              <div className="mt-5">
-                <p className="mb-2 text-xs font-medium text-[var(--muted-foreground)]">
+              <div suppressHydrationWarning className="mt-5">
+                <p suppressHydrationWarning className="mb-2 text-xs font-medium text-[var(--muted-foreground)]">
                   {t("Suggested prompts (copy to chat)")}
                 </p>
-                <div className="space-y-2">
+                <div suppressHydrationWarning className="space-y-2">
                   {starterPrompts.map((prompt) => (
                     <button
                       key={prompt}
@@ -105,17 +110,19 @@ export default function MindmapPage() {
           </div>
         )}
 
-        <div className="mindmap-chat-clean">
-          <CopilotSidebar
-            key={copilotSidebarKey}
-            defaultOpen={false}
-            clickOutsideToClose={false}
-            labels={{
-              title: '',
-              initial: t("Hi! Tell me a topic and I'll start building a map for you."),
-              placeholder: t("Ask me to build, expand, or quiz on any concept..."),
-            }}
-          />
+        <div suppressHydrationWarning className="mindmap-chat-clean">
+          {mounted && (
+            <CopilotSidebar
+              key={copilotSidebarKey}
+              defaultOpen={false}
+              clickOutsideToClose={false}
+              labels={{
+                title: '',
+                initial: t("Hi! Tell me a topic and I'll start building a map for you."),
+                placeholder: t("Ask me to build, expand, or quiz on any concept..."),
+              }}
+            />
+          )}
         </div>
       </div>
       <style jsx global>{`
