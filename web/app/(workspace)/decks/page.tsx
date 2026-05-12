@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { Presentation, Plus, FileText, Trash2, Layout, Download, Sparkles, Clock, Presentation as PresentationIcon, MonitorPlay } from "lucide-react";
 import { apiUrl } from "@/lib/api";
 import { useTranslation } from "react-i18next";
+import { AnimatePresence } from "framer-motion";
+import { DeckLoading } from "@/components/decks/DeckLoading";
+import { SidebarDeckLoading } from "@/components/decks/SidebarDeckLoading";
 
 interface DeckSummary {
   id: string;
@@ -66,6 +69,8 @@ export default function DecksPage() {
       });
 
       if (res.ok) {
+        // Give the animation some time to be seen and exit smoothly
+        await new Promise(resolve => setTimeout(resolve, 2000));
         setTopic("");
         setSourceText("");
         fetchDecks();
@@ -143,11 +148,7 @@ export default function DecksPage() {
                         </button>
                       )}
                     </div>
-                    {deck.status !== 'completed' && (
-                      <div className="mt-3 h-1 w-full bg-[var(--secondary)] rounded-full overflow-hidden">
-                        <div className="h-full bg-amber-500 w-1/3 animate-pulse" />
-                      </div>
-                    )}
+                    {deck.status !== 'completed' && <SidebarDeckLoading />}
                   </div>
                 ))
               )}
@@ -170,12 +171,9 @@ export default function DecksPage() {
               </div>
 
               <div className="relative rounded-[40px] bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 p-8 shadow-sm overflow-hidden">
-                {isGenerating && (
-                  <div className="absolute inset-0 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-4 animate-in fade-in duration-300">
-                    <div className="h-12 w-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-sm font-black uppercase tracking-widest text-amber-600">{t("Crafting Slides...")}</p>
-                  </div>
-                )}
+                <AnimatePresence>
+                  {isGenerating && <DeckLoading />}
+                </AnimatePresence>
 
                 <div className="space-y-6">
                   <div>
