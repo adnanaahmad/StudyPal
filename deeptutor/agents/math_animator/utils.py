@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
+import subprocess
 from typing import Any
 
 
@@ -94,20 +96,78 @@ def build_repair_error_message(error_message: str) -> str:
             "Check any custom point lists, helper lines, braces, polygons, or manually assembled VMobject paths."
         )
 
+    if "latex error" in lowered or "compile_tex" in lowered or "dvi" in lowered:
+        hints.append(
+            "LaTeX compilation failed. It appears LaTeX (latex/dvips) is NOT installed or broken on this system."
+        )
+        hints.append(
+            "CRITICAL: You MUST NOT use `MathTex` or `Tex`. Replace them with `Text()` for all mathematical notation and labels."
+        )
+        hints.append(
+            "Example: Change `MathTex('y = 2x + 1')` to `Text('y = 2x + 1')`."
+        )
+
+    if "color" in lowered and "not found" in lowered:
+        hints.append(
+            "A color was not found. This often happens if you pass multiple positional arguments to `Text()`. "
+            "Ensure `Text()` receives exactly one string as its first positional argument. "
+            "Example: Use `Text('y = 2x + 1')` instead of `Text('y', '=', '2x + 1')`."
+        )
+
+    if "name" in lowered and "is not defined" in lowered:
+        # Check for patterns like calculation_steps0
+        if re.search(r"[a-z_]+[0-9]+", lowered):
+            hints.append(
+                "Detected a possible NameError due to missing brackets. "
+                "Ensure you use square brackets for indexing. Example: `list[0]` instead of `list0`."
+            )
+
     if not hints:
         return text
 
     return text + "\n\nTargeted repair hints:\n- " + "\n- ".join(hints)
 
 
+def get_latex_path() -> str | None:
+    """Find the path to the latex executable, checking common locations on macOS."""
+    found = shutil.which("latex")
+    if found:
+        return found
+
+    # Common macOS path for BasicTeX/MacTeX
+    macos_texbin = "/Library/TeX/texbin/latex"
+    if os.path.exists(macos_texbin):
+        return macos_texbin
+
+    return None
+
+
 def has_latex() -> bool:
-    """Check if LaTeX is available on the system."""
-    return shutil.which("latex") is not None
+    """Check if LaTeX is available on the system and has the required standalone package."""
+    latex_path = get_latex_path()
+    if not latex_path:
+        return False
+
+    # Check for standalone.cls as Manim requires it
+    tex_dir = os.path.dirname(latex_path)
+    kpsewhich = os.path.join(tex_dir, "kpsewhich")
+    if os.path.exists(kpsewhich):
+        try:
+            result = subprocess.run(
+                [kpsewhich, "standalone.cls"], capture_output=True, text=True
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                return True
+        except Exception:
+            pass
+
+    return False
 
 
 __all__ = [
     "build_repair_error_message",
     "extract_json_object",
+    "get_latex_path",
     "has_latex",
     "slugify_filename",
     "trim_error_message",

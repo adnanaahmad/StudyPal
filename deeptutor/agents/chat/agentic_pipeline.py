@@ -61,7 +61,7 @@ class AgenticChatPipeline:
         self.language = "zh" if language.lower().startswith("zh") else "en"
         self.llm_config = get_llm_config()
         self.binding = getattr(self.llm_config, "binding", None) or "openai"
-        self.model = getattr(self.llm_config, "model", None)
+        self.model = os.getenv("CHAT_MODEL") or getattr(self.llm_config, "model", None)
         self.api_key = getattr(self.llm_config, "api_key", None)
         self.base_url = getattr(self.llm_config, "base_url", None)
         self.api_version = getattr(self.llm_config, "api_version", None)

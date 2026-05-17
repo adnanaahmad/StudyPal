@@ -10,7 +10,7 @@ export default function ToolsHubPage() {
 
   // Group tools by category for a structured layout if needed, 
   // but for 8 tools a single clean grid is usually better.
-  
+
   return (
     <div className="flex h-full flex-col overflow-y-auto bg-[var(--background)] px-6 py-10 md:px-12">
       <div className="mx-auto w-full max-w-6xl">
@@ -20,11 +20,11 @@ export default function ToolsHubPage() {
             <LayoutGrid size={20} strokeWidth={2} />
             <span className="text-sm font-semibold uppercase tracking-wider">{t("Workshop")}</span>
           </div>
-          
+
           <h1 className="text-[24px] font-semibold tracking-tight text-[var(--foreground)]">
             {t("Learning Tools")}
           </h1>
-          
+
           <p className="max-w-2xl text-[17px] leading-relaxed text-[var(--muted-foreground)]">
             {t("Supercharge your studies with specialized AI utilities. From visualizing complex ideas to simulating exams, everything you need to master your subjects is right here.")}
           </p>
@@ -45,7 +45,7 @@ export default function ToolsHubPage() {
         </div>
 
         {/* Empty State / Footer Callout */}
-        <div className="mt-20 flex flex-col items-center justify-center rounded-3xl border border-dashed border-[var(--border)] p-12 text-center">
+        {/* <div className="mt-20 flex flex-col items-center justify-center rounded-3xl border border-dashed border-[var(--border)] p-12 text-center">
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--secondary)] text-[var(--muted-foreground)]">
             <LayoutGrid size={24} />
           </div>
@@ -53,7 +53,7 @@ export default function ToolsHubPage() {
           <p className="mt-2 text-[15px] text-[var(--muted-foreground)]">
             {t("We are constantly building new ways to help you learn faster and better.")}
           </p>
-        </div>
+        </div> */}
       </div>
     </div>
   );

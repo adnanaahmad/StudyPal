@@ -158,26 +158,32 @@ class BaseAgent(ABC):
         Raises:
             ValueError: If model is not configured
         """
-        # 1. Try agent-specific config
+        # 1. Try module-specific environment variable (e.g., MATH_ANIMATOR_MODEL)
+        module_env_var = f"{self.module_name.upper()}_MODEL"
+        env_model = os.getenv(module_env_var)
+        if env_model:
+            return env_model
+
+        # 2. Try agent-specific config
         if self.agent_config.get("model"):
             return self.agent_config["model"]
 
-        # 2. Try general LLM config
+        # 3. Try general LLM config
         if self.llm_config.get("model"):
             return self.llm_config["model"]
 
-        # 3. Use instance model
+        # 4. Use instance model
         if self.model:
             return self.model
 
-        # 4. Fallback to environment variable
+        # 5. Fallback to environment variable
         env_model = os.getenv("LLM_MODEL")
         if env_model:
             return env_model
 
         raise ValueError(
             f"Model not configured for agent {self.agent_name}. "
-            "Please set LLM_MODEL in .env or activate a provider."
+            "Please set LLM_MODEL or {self.module_name.upper()}_MODEL in .env."
         )
 
     def get_temperature(self) -> float:

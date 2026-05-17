@@ -13,7 +13,7 @@ from typing import Awaitable, Callable
 from deeptutor.services.path_service import get_path_service
 
 from .models import RenderResult, RenderedArtifact
-from .utils import has_latex, slugify_filename, trim_error_message
+from .utils import get_latex_path, has_latex, slugify_filename, trim_error_message
 
 YON_IMAGE_PATTERN = re.compile(
     r"###\s*YON_IMAGE_(\d+)_START\s*###\s*(.*?)\s*###\s*YON_IMAGE_\1_END\s*###",
@@ -156,6 +156,15 @@ class ManimRenderService:
             raw=True,
         )
 
+        # Ensure LaTeX is in PATH if found in common locations (e.g. BasicTeX on macOS)
+        import os
+        env = os.environ.copy()
+        latex_path = get_latex_path()
+        if latex_path:
+            latex_dir = os.path.dirname(latex_path)
+            if latex_dir not in env.get("PATH", ""):
+                env["PATH"] = f"{latex_dir}{os.pathsep}{env.get('PATH', '')}"
+
         # Use subprocess.Popen instead of asyncio.create_subprocess_exec
         # for Windows compatibility (SelectorEventLoop doesn't support
         # asyncio subprocesses). Reader threads + asyncio.Queue preserve
@@ -164,6 +173,7 @@ class ManimRenderService:
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            env=env,
         )
 
         _SENTINEL = None
@@ -245,24 +255,33 @@ class ManimRenderService:
         )
 
     def _inject_latex_fallback_stubs(self, code: str) -> str:
-        """Inject MathTex/Tex fallback stubs that use Text mobjects."""
-        # We inject at the top, but after imports if they exist.
+        """Inject MathTex/Tex fallback stubs at the very top of the script."""
         stub = (
             "\n# --- DeepTutor LaTeX Fallback Stubs ---\n"
-            "class MathTex(Text):\n"
+            "import manim\n"
+            "import sys\n"
+            "class MathTexFallback(manim.Text):\n"
             "    def __init__(self, *args, **kwargs):\n"
             "        kwargs.pop('tex_environment', None)\n"
             "        kwargs.pop('tex_template', None)\n"
             "        kwargs.pop('arg_separator', None)\n"
             "        text_args = [a for a in args if isinstance(a, str)]\n"
             "        super().__init__(' '.join(text_args), **kwargs)\n"
-            "class Tex(MathTex): pass\n"
+            "class TexFallback(MathTexFallback): pass\n"
+            "class TransformMatchingTex(manim.TransformMatchingShapes): pass\n"
+            "\n# Global Monkeypatch\n"
+            "manim.MathTex = MathTexFallback\n"
+            "manim.Tex = TexFallback\n"
+            "manim.TransformMatchingTex = TransformMatchingTex\n"
+            "if 'manim.mobject.text.tex_mobject' in sys.modules:\n"
+            "    sys.modules['manim.mobject.text.tex_mobject'].MathTex = MathTexFallback\n"
+            "    sys.modules['manim.mobject.text.tex_mobject'].Tex = TexFallback\n"
+            "\n# Ensure local names are also set if imports already happened\n"
+            "MathTex = MathTexFallback\n"
+            "Tex = TexFallback\n"
             "# --------------------------------------\n\n"
         )
-        if "from manim import *" in code:
-            return code.replace("from manim import *", "from manim import *\n" + stub, 1)
-        if "import manim" in code:
-            return code.replace("import manim", "import manim\n" + stub, 1)
+        # Inject at the very beginning
         return stub + code
 
 
