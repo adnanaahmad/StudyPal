@@ -79,10 +79,10 @@ export default function ChatPanel({
                 msg.role === "user"
                   ? "bg-primary text-white rounded-tr-none shadow-md shadow-primary/20"
                   : msg.role === "system" && msg.content.includes("⏳")
-                    ? "bg-amber-50 border border-amber-200 text-amber-900 rounded-tl-none"
+                    ? "bg-amber-50 border border-amber-200 text-amber-900 dark:bg-amber-950/40 dark:border-amber-900/50 dark:text-amber-200 rounded-tl-none"
                     : msg.role === "system"
-                      ? "bg-blue-50 border border-blue-200 text-blue-900 rounded-tl-none"
-                      : "bg-white border border-slate-200 text-slate-700 rounded-tl-none shadow-sm"
+                      ? "bg-blue-50 border border-blue-200 text-blue-900 dark:bg-blue-950/40 dark:border-blue-900/50 dark:text-blue-200 rounded-tl-none"
+                      : "bg-white border border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-100 rounded-tl-none shadow-sm"
               }`}
             >
               {typeof msg.knowledge_index === "number" && (
@@ -94,7 +94,7 @@ export default function ChatPanel({
                 <MarkdownRenderer
                   content={msg.content}
                   variant="compact"
-                  className="prose-slate text-sm"
+                  className="prose-slate dark:prose-invert text-sm"
                 />
               ) : (
                 <p>{msg.content}</p>
