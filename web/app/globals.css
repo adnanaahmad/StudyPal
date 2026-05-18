@@ -122,19 +122,15 @@
   }
 
   .timer-display--short {
-    background-image: linear-gradient(
-      165deg,
-      var(--timer-short-highlight) 0%,
-      var(--timer-short-deep) 100%
-    );
+    background-image: linear-gradient(165deg,
+        var(--timer-short-highlight) 0%,
+        var(--timer-short-deep) 100%);
   }
 
   .timer-display--long {
-    background-image: linear-gradient(
-      165deg,
-      var(--timer-long-highlight) 0%,
-      var(--timer-long-deep) 100%
-    );
+    background-image: linear-gradient(165deg,
+        var(--timer-long-highlight) 0%,
+        var(--timer-long-deep) 100%);
   }
 }
 
@@ -337,8 +333,8 @@
   @apply mb-1;
 }
 
-.prose li > ul,
-.prose li > ol {
+.prose li>ul,
+.prose li>ol {
   @apply mt-1 mb-0;
 }
 
@@ -351,7 +347,7 @@
   @apply flex items-start gap-0;
 }
 
-.prose li > input[type="checkbox"] {
+.prose li>input[type="checkbox"] {
   @apply mt-1.5 shrink-0;
 }
 
@@ -420,7 +416,7 @@
   display: none;
 }
 
-.prose > :empty:not(hr):not(br):not(img) {
+.prose> :empty:not(hr):not(br):not(img) {
   display: none;
 }
 
@@ -429,7 +425,7 @@
   color: var(--foreground);
 }
 
-.prose details[open] > summary {
+.prose details[open]>summary {
   @apply mb-2;
 }
 
@@ -470,6 +466,7 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -482,10 +479,13 @@
 
 /* Session status pulse */
 @keyframes session-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0;
     transform: scale(1);
   }
+
   50% {
     opacity: 1;
     transform: scale(2.2);
@@ -558,12 +558,172 @@
 }
 
 @keyframes breathe {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.6;
   }
+
   50% {
     transform: scale(1.05);
     opacity: 0.8;
   }
+}
+
+/* ==========================================================================
+   CopilotKit Theming and Styles Overrides (Revised v1 Spec)
+   ========================================================================== */
+
+/* 1. Scoped CSS Variable Injection (Overrides :root cascade by using class selectors) */
+.planner-chat-clean,
+.mindmap-chat-clean,
+.flashcards-chat-clean,
+.copilotKitSidebarContentWrapper {
+  --copilot-kit-primary-color: var(--primary) !important;
+  --copilot-kit-contrast-color: var(--primary-foreground) !important;
+  --copilot-kit-background-color: var(--card) !important;
+  --copilot-kit-input-background-color: var(--background) !important;
+  --copilot-kit-secondary-color: var(--secondary) !important;
+  --copilot-kit-separator-color: var(--border) !important;
+  --copilot-kit-muted-color: var(--muted-foreground) !important;
+}
+
+/* 2. Direct Class Selectors for High Specificity Overrides */
+
+/* Core Windows & Panels */
+.copilotKitSidebar,
+.copilotKitChat,
+.copilotKitPanel,
+.copilotKitWindow {
+  background-color: var(--copilot-kit-background-color) !important;
+  color: var(--foreground) !important;
+  border-color: var(--copilot-kit-separator-color) !important;
+  font-family: var(--font-sans), sans-serif !important;
+}
+
+/* Header customization */
+.copilotKitHeader {
+  background-color: var(--copilot-kit-secondary-color) !important;
+  border-bottom: 1px solid var(--copilot-kit-separator-color) !important;
+  color: var(--foreground) !important;
+}
+
+.copilotKitHeaderCloseButton {
+  color: var(--foreground) !important;
+}
+
+/* Messages area */
+.copilotKitMessages {
+  background-color: var(--copilot-kit-background-color) !important;
+}
+
+/* Message bubbles custom styling */
+.copilotKitMessage {
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+  margin-bottom: 2rem !important;
+}
+
+/* Assistant Message Bubble (Transparent & clean like original) */
+.copilotKitAssistantMessage {
+  background-color: transparent !important;
+  color: var(--foreground) !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin-right: 0 !important;
+  max-width: 100% !important;
+}
+
+/* User Message Bubble (Compact, floating right, matching user's custom color) */
+.copilotKitUserMessage {
+  background-color: var(--secondary) !important;
+  color: var(--foreground) !important;
+  border-radius: 1rem !important;
+  padding: 0.85rem 1.1rem !important;
+  margin-left: auto !important; /* Float right */
+  margin-right: 0.5rem !important;
+  max-width: 75% !important;
+  width: max-content !important;
+  display: block !important;
+  border: 1px solid var(--border) !important;
+}
+
+/* Message Controls / Buttons Position Shift */
+.copilotKitMessageControls {
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  display: flex !important;
+  gap: 0.5rem !important;
+}
+
+
+
+/* Input Area & Container overrides */
+.copilotKitInputContainer {
+  background-color: var(--copilot-kit-background-color) !important;
+  border-top: none !important;
+}
+
+.copilotKitInput {
+  background-color: var(--copilot-kit-input-background-color) !important;
+  border: 1px solid var(--copilot-kit-separator-color) !important;
+  border-radius: 0.75rem !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.copilotKitInput:focus-within {
+  border-color: var(--copilot-kit-primary-color) !important;
+  box-shadow: none !important;
+}
+
+.copilotKitInput textarea {
+  background-color: transparent !important;
+  color: var(--foreground) !important;
+  font-family: inherit !important;
+  font-size: 0.875rem !important;
+}
+
+.copilotKitInput textarea::placeholder {
+  color: var(--copilot-kit-muted-color) !important;
+  opacity: 0.75 !important;
+}
+
+/* Send & Controls Button overrides */
+.copilotKitInputControlButton {
+  color: var(--copilot-kit-primary-color) !important;
+  transition: opacity 0.2s ease !important;
+}
+
+.copilotKitInputControlButton:hover:not(:disabled) {
+  opacity: 0.8 !important;
+}
+
+.copilotKitInputControlButton:disabled {
+  color: var(--copilot-kit-muted-color) !important;
+  opacity: 0.5 !important;
+}
+
+/* Branding footer */
+.poweredBy {
+  color: var(--copilot-kit-muted-color) !important;
+}
+
+/* Custom scrollbars inside CopilotKit chat messages */
+.copilotKitMessages::-webkit-scrollbar {
+  width: 5px !important;
+}
+
+.copilotKitMessages::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.copilotKitMessages::-webkit-scrollbar-thumb {
+  background: var(--copilot-kit-separator-color) !important;
+  border-radius: 3px !important;
+}
+
+.copilotKitMessages::-webkit-scrollbar-thumb:hover {
+  background: var(--copilot-kit-muted-color) !important;
 }
