@@ -17,7 +17,7 @@ from deeptutor.services.path_service import get_path_service
 _setup_logger = None
 
 DEFAULT_INTERFACE_SETTINGS = {
-    "theme": "light",
+    "theme": "dark",
     "language": "en",
     "sidebar_description": "✨ Data Intelligence Lab @ HKU",
     "sidebar_nav_order": {

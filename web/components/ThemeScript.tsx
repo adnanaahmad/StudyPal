@@ -15,12 +15,13 @@ export default function ThemeScript() {
         } else if (stored === 'light') {
           document.documentElement.classList.remove('dark');
         } else {
-          // Use system preference if not set
-          if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          // Use system preference if not set, default to dark theme
+          if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('deeptutor-theme', 'light');
+          } else {
             document.documentElement.classList.add('dark');
             localStorage.setItem('deeptutor-theme', 'dark');
-          } else {
-            localStorage.setItem('deeptutor-theme', 'light');
           }
         }
       } catch (e) {

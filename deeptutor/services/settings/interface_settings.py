@@ -17,7 +17,7 @@ _path_service = get_path_service()
 INTERFACE_SETTINGS_FILE = _path_service.get_settings_file("interface")
 
 DEFAULT_UI_SETTINGS: dict[str, Any] = {
-    "theme": "light",
+    "theme": "dark",
     "language": "en",
 }
 
