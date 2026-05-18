@@ -3,7 +3,20 @@ generate_system: |
   Produce runnable Python Manim code.
   Rules:
   - For video mode, return one complete Manim script with at least one renderable Scene subclass.
-  - For image mode, return YON_IMAGE anchor blocks only, and each block must contain a standalone renderable Manim script.
+  - For image mode, return YON_IMAGE anchor blocks only, and each block must contain a standalone renderable Manim script. Format:
+    ### YON_IMAGE_1_START ###
+    from manim import *
+    class Scene1(Scene):
+        def construct(self):
+            ...
+    ### YON_IMAGE_1_END ###
+    ### YON_IMAGE_2_START ###
+    from manim import *
+    class Scene2(Scene):
+        def construct(self):
+            ...
+    ### YON_IMAGE_2_END ###
+    Anchor numbering starts at 1. The code field must contain nothing outside YON_IMAGE anchor blocks.
   - Do not include commentary outside the JSON response.
   - Every geometric point, path point, and vertex passed to Manim must be 3D; do not use `[x, y]` when `[x, y, 0]` is required.
   - When positions come from axes or planes, prefer helpers such as `axes.c2p(...)` and `plane.c2p(...)` so the result is a valid 3D point.
@@ -19,13 +32,11 @@ generate_system: |
   - After the final important conclusion appears, keep a stable hold of roughly 1.5-3 seconds so the viewer can actually read it.
   - If the resulting code would likely feel shorter than about 10 seconds, extend the pacing unless the user explicitly requested a short clip.
   - If the user gives an explicit target duration (for example, 10 seconds), this requirement has highest priority: explicitly budget enough `run_time` and `self.wait(...)` in code so total runtime stays close to target (recommended >= 90% of target).
-  - You may use `MathTex` and `Tex` for mathematical formulas and labels.
-  - If LaTeX compilation fails during rendering, you MUST fallback to `Text()` in the retry attempt.
+  - Assume local LaTeX may be unavailable. By default, do NOT use `Tex`, `MathTex`, `SingleStringMathTex`, `MarkupText`, or any LaTeX-dependent rendering path.
+  - Prefer non-LaTeX math presentation with `Text`, `DecimalNumber`, tables, labels, and geometric visualization; avoid requiring a local `latex` executable.
   - Do NOT use the `stroke_dash_pattern` parameter (not supported in Manim v0.20.1); use alternative approaches for dashed lines.
   - Do NOT use `self.save_state()` (not supported in MovingCameraScene); use alternative state management.
   - Camera movement rule: only use `self.camera.frame` when the scene class inherits `MovingCameraScene`. If the class is plain `Scene`, `self.camera.frame` must not appear.
-  - CRITICAL: When using `Text()`, pass the entire string as the first argument (e.g., `Text("y = 2x + 1")`). Do NOT pass multiple positional arguments like `Text('y', '=', '2x')`, as this will cause color errors.
-  - Ensure all Python syntax is correct: use square brackets for indexing (e.g., `calculation_steps[0]`) and the `*` operator for multiplication (e.g., `DOWN * 0.5`). Do NOT mangle these into `calculation_steps0` or `DOWN0.5`.
   - If camera capability is uncertain, skip camera pan/zoom code and prioritize render stability.
 
 generate_user_template: |
@@ -55,12 +66,13 @@ retry_system: |
   While repairing, do not shorten the animation just to make it run. Preserve complete teaching pacing and the necessary pauses whenever possible.
   If the original animation is obviously too short, you may also add the necessary waits, extra beats, or ending hold while repairing.
   If the user gave an explicit duration target, the repaired code should remain close to that target instead of becoming shorter.
-  - If the error is a LaTeX compilation error, you MUST replace the problematic `MathTex` or `Tex` objects with `Text()`.
+  Also avoid introducing `Tex` / `MathTex` / `MarkupText` by default unless LaTeX is explicitly required and available.
   If the error mentions `stroke_dash_pattern`, remove that parameter immediately.
   If the error mentions `save_state`, remove that method call immediately.
   If the error mentions `self.camera.frame`, repair by either:
   1) changing the scene base class to `MovingCameraScene`, or
   2) removing camera-frame animation while keeping the teaching flow.
+  If the error mentions `YON_IMAGE`, the image-mode code is missing anchor markers. Wrap the code in `### YON_IMAGE_n_START ###` / `### YON_IMAGE_n_END ###` blocks and ensure the code field contains nothing outside those anchor blocks.
 
 retry_user_template: |
   User request:

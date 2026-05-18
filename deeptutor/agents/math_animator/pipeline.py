@@ -19,7 +19,6 @@ from .models import RenderResult, VisualReviewResult
 from .renderer import ManimRenderService
 from .request_config import MathAnimatorRequestConfig
 from .retry_manager import CodeRetryManager
-from .utils import has_latex as check_latex
 from .visual_review import VisualReviewService
 
 
@@ -35,7 +34,6 @@ class MathAnimatorPipeline:
         enable_visual_review: bool = False,
     ) -> None:
         self.enable_visual_review = enable_visual_review
-        self.has_latex = check_latex()
         self.analysis_agent = ConceptAnalysisAgent(
             api_key=api_key,
             base_url=base_url,
@@ -97,7 +95,6 @@ class MathAnimatorPipeline:
             output_mode=request_config.output_mode,
             style_hint=request_config.style_hint,
             attachments=attachments,
-            has_latex=self.has_latex,
         )
 
     async def run_design(
@@ -112,7 +109,6 @@ class MathAnimatorPipeline:
             output_mode=request_config.output_mode,
             analysis=analysis,
             style_hint=request_config.style_hint,
-            has_latex=self.has_latex,
         )
 
     async def run_code_generation(
@@ -136,7 +132,6 @@ class MathAnimatorPipeline:
             analysis=analysis,
             design=design,
             duration_target_seconds=duration_target_seconds,
-            has_latex=self.has_latex,
         )
 
     async def run_render(
@@ -162,7 +157,9 @@ class MathAnimatorPipeline:
         if self.enable_visual_review and self.visual_review_agent is not None:
             review_service = VisualReviewService(turn_id, progress_callback=on_render_progress)
 
-            async def _review_callback(current_code: str, render_result: RenderResult) -> VisualReviewResult:
+            async def _review_callback(
+                current_code: str, render_result: RenderResult
+            ) -> VisualReviewResult:
                 attachments = await review_service.build_attachments(render_result)
                 return await self.visual_review_agent.process(
                     user_input=user_input,
@@ -187,7 +184,6 @@ class MathAnimatorPipeline:
                 error_message=error_message,
                 attempt=attempt,
                 duration_target_seconds=duration_target_seconds,
-                has_latex=self.has_latex,
             ),
         )
         final_code, render_result = await retry_manager.render_with_retries(

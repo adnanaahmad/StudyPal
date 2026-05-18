@@ -35,7 +35,6 @@ class ConceptDesignAgent(BaseAgent):
         output_mode: str,
         analysis: ConceptAnalysis,
         style_hint: str,
-        has_latex: bool = True,
     ) -> SceneDesign:
         system_prompt = self.get_prompt("system")
         user_template = self.get_prompt("user_template")
@@ -48,13 +47,6 @@ class ConceptDesignAgent(BaseAgent):
             style_hint=style_hint.strip() or "(none)",
             analysis_json=json.dumps(analysis.model_dump(), ensure_ascii=False, indent=2),
         )
-
-        if not has_latex:
-            user_prompt = (
-                "NOTE: LaTeX is NOT available on this system. Avoid using "
-                "MathTex or Tex objects in your scene design. Recommend "
-                "Text mobjects for all text and mathematical notation.\n\n"
-            ) + user_prompt
         _chunks: list[str] = []
         async for _c in self.stream_llm(
             user_prompt=user_prompt,

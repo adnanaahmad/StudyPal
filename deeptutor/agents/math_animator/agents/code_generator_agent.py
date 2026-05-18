@@ -36,7 +36,6 @@ class CodeGeneratorAgent(BaseAgent):
         analysis: ConceptAnalysis,
         design: SceneDesign,
         duration_target_seconds: float | None = None,
-        has_latex: bool = True,
     ) -> GeneratedCode:
         """BaseAgent-compatible entrypoint for the default generation path."""
         return await self.generate(
@@ -45,7 +44,6 @@ class CodeGeneratorAgent(BaseAgent):
             analysis=analysis,
             design=design,
             duration_target_seconds=duration_target_seconds,
-            has_latex=has_latex,
         )
 
     async def generate(
@@ -56,7 +54,6 @@ class CodeGeneratorAgent(BaseAgent):
         analysis: ConceptAnalysis,
         design: SceneDesign,
         duration_target_seconds: float | None = None,
-        has_latex: bool = True,
     ) -> GeneratedCode:
         system_prompt = self.get_prompt("generate_system")
         user_template = self.get_prompt("generate_user_template")
@@ -74,14 +71,6 @@ class CodeGeneratorAgent(BaseAgent):
             analysis_json=json.dumps(analysis.model_dump(), ensure_ascii=False, indent=2),
             design_json=json.dumps(design.model_dump(), ensure_ascii=False, indent=2),
         )
-
-        if not has_latex:
-            user_prompt = (
-                "CRITICAL: LaTeX is NOT installed on this system. "
-                "You MUST NOT use `manim.Tex` or `manim.MathTex`. "
-                "Instead, use `manim.Text` for ALL text, labels, and mathematical symbols. "
-                "For example, use `Text('x = 2')` instead of `MathTex('x=2')`.\n\n"
-            ) + user_prompt
         _chunks: list[str] = []
         async for _c in self.stream_llm(
             user_prompt=user_prompt,
@@ -110,7 +99,6 @@ class CodeGeneratorAgent(BaseAgent):
         error_message: str,
         attempt: int,
         duration_target_seconds: float | None = None,
-        has_latex: bool = True,
     ) -> GeneratedCode:
         system_prompt = self.get_prompt("retry_system")
         user_template = self.get_prompt("retry_user_template")
@@ -129,14 +117,6 @@ class CodeGeneratorAgent(BaseAgent):
             error_message=build_repair_error_message(error_message),
             current_code=current_code,
         )
-
-        if not has_latex:
-            user_prompt = (
-                "CRITICAL: LaTeX is NOT installed on this system. "
-                "You MUST NOT use `manim.Tex` or `manim.MathTex`. "
-                "Instead, use `manim.Text` for ALL text, labels, and mathematical symbols. "
-                "For example, use `Text('x = 2')` instead of `MathTex('x=2')`.\n\n"
-            ) + user_prompt
         _chunks: list[str] = []
         async for _c in self.stream_llm(
             user_prompt=user_prompt,

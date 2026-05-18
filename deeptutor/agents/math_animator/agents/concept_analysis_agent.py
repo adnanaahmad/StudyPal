@@ -35,7 +35,6 @@ class ConceptAnalysisAgent(BaseAgent):
         output_mode: str,
         style_hint: str,
         attachments: list[Attachment],
-        has_latex: bool = True,
     ) -> ConceptAnalysis:
         system_prompt = self.get_prompt("system")
         user_template = self.get_prompt("user_template")
@@ -50,13 +49,6 @@ class ConceptAnalysisAgent(BaseAgent):
             style_hint=style_hint.strip() or "(none)",
             reference_count=reference_count,
         )
-
-        if not has_latex:
-            user_prompt = (
-                "NOTE: LaTeX is NOT available on this system. Avoid suggesting "
-                "complex LaTeX formulas. Prefer simpler textual or geometric "
-                "explanations where possible.\n\n"
-            ) + user_prompt
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt},
