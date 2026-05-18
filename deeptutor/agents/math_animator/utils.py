@@ -96,6 +96,21 @@ def build_repair_error_message(error_message: str) -> str:
             "Check any custom point lists, helper lines, braces, polygons, or manually assembled VMobject paths."
         )
 
+    if "get_start" in lowered or "get_end" in lowered or "size 0" in lowered or "index 0 is out of bounds" in lowered or "empty" in lowered:
+        hints.append(
+            "Detected an issue where `.get_start()`, `.get_end()`, or point-indexing was called on a Mobject with no points "
+            "(e.g., an empty VMobject, a VGroup, or an uninitialized shape)."
+        )
+        hints.append(
+            "Ensure all Mobjects have points initialized before trying to access their coordinates. "
+            "For example, lines, curves, axes, or custom shapes must be fully constructed with proper coordinates."
+        )
+        hints.append(
+            "If you are aligning objects or getting positions on a coordinate system, "
+            "prefer using `axes.c2p(...)` (coordinates-to-point) or direct positioning methods like `.next_to(...)` or `.to_edge(...)` "
+            "instead of extracting coordinate endpoints from unpopulated/point-less parent Mobjects."
+        )
+
     if "latex error" in lowered or "compile_tex" in lowered or "dvi" in lowered:
         hints.append(
             "LaTeX compilation failed. It appears LaTeX (latex/dvips) is NOT installed or broken on this system."
