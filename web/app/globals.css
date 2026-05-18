@@ -727,3 +727,11 @@
 .copilotKitMessages::-webkit-scrollbar-thumb:hover {
   background: var(--copilot-kit-muted-color) !important;
 }
+
+/* ==========================================================================
+   Markmap Mind Map Text Color Overrides (HTML foreignObject Elements)
+   ========================================================================== */
+.markmap-foreign div {
+  color: var(--foreground) !important;
+  font-family: var(--font-sans), sans-serif !important;
+}
