@@ -13,25 +13,29 @@ import { NextRequest } from "next/server";
 //   OLLAMA_BASE_URL  - default http://localhost:11434/v1
 //   COPILOT_MODEL    - default qwen2.5:7b
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL ?? "http://localhost:11434/v1";
-const COPILOT_MODEL = process.env.COPILOT_MODEL ?? "qwen2.5:7b";
+const COPILOT_MODEL = process.env.COPILOT_MODEL ?? "gemma4";
 
 const openai = new OpenAI({
   baseURL: OLLAMA_BASE_URL,
   apiKey: "ollama",
 });
 
-const serviceAdapter = new OpenAIAdapter({
-  openai,
-  model: COPILOT_MODEL,
-  // Sequential tool calls keep state mutations visible to the next call —
-  // important for the mindmap where add_node order matters.
-  disableParallelToolCalls: true,
-  keepSystemRole: true,
-});
-
 const runtime = new CopilotRuntime();
 
 export const POST = async (req: NextRequest) => {
+  const referer = req.headers.get("referer");
+  const useQwen = referer?.includes("/mindmap") || referer?.includes("/podcasts") || referer?.includes("/decks");
+  const model = useQwen ? "qwen2.5:7b" : COPILOT_MODEL;
+
+  const serviceAdapter = new OpenAIAdapter({
+    openai,
+    model,
+    // Sequential tool calls keep state mutations visible to the next call —
+    // important for the mindmap where add_node order matters.
+    disableParallelToolCalls: true,
+    keepSystemRole: true,
+  });
+
   const { handleRequest } = copilotRuntimeNextJSAppRouterEndpoint({
     runtime,
     serviceAdapter,
