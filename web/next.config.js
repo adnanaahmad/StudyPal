@@ -5,10 +5,11 @@ const nextConfig = {
   // This eliminates the need to copy the full node_modules into Docker production images
   output: "standalone",
 
-  // Move dev indicator to bottom-right corner
-  devIndicators: {
-    position: "bottom-right",
-  },
+  // Disable dev indicators unless explicitly enabled via environment variable
+  devIndicators:
+    process.env.NEXT_PUBLIC_SHOW_COPILOT_DEV_TOOLS === "true"
+      ? { position: "bottom-right" }
+      : false,
 
   // Transpile mermaid and related packages for proper ESM handling
   transpilePackages: ["mermaid"],

@@ -8,8 +8,14 @@ export default function WorkspaceLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const showDevTools = process.env.NEXT_PUBLIC_SHOW_COPILOT_DEV_TOOLS === "true";
+
   return (
-    <CopilotKit runtimeUrl="/api/copilotkit">
+    <CopilotKit 
+      runtimeUrl="/api/copilotkit"
+      showDevConsole={showDevTools}
+      enableInspector={showDevTools}
+    >
       <UnifiedChatProvider>
         <div suppressHydrationWarning className="flex h-screen overflow-hidden">
           <WorkspaceSidebar />

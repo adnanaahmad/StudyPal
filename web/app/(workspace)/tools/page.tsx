@@ -12,11 +12,11 @@ export default function ToolsHubPage() {
   // but for 8 tools a single clean grid is usually better.
 
   return (
-    <div className="flex h-full flex-col overflow-y-auto bg-[var(--background)] px-6 py-10 md:px-12">
-      <div className="mx-auto w-full max-w-6xl">
+    <div suppressHydrationWarning className="flex h-full flex-col overflow-y-auto bg-[var(--background)] px-6 py-10 md:px-12">
+      <div suppressHydrationWarning className="mx-auto w-full max-w-6xl">
         {/* Header Section */}
-        <div className="mb-12 flex flex-col items-start gap-4">
-          <div className="flex items-center gap-3 rounded-2xl bg-[var(--primary)]/10 px-4 py-2 text-[var(--primary)]">
+        <div suppressHydrationWarning className="mb-12 flex flex-col items-start gap-4">
+          <div suppressHydrationWarning className="flex items-center gap-3 rounded-2xl bg-[var(--primary)]/10 px-4 py-2 text-[var(--primary)]">
             <LayoutGrid size={20} strokeWidth={2} />
             <span className="text-sm font-semibold uppercase tracking-wider">{t("Workshop")}</span>
           </div>
@@ -31,7 +31,7 @@ export default function ToolsHubPage() {
         </div>
 
         {/* Tools Grid */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div suppressHydrationWarning className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {TOOLS.map((tool) => (
             <ToolCard
               key={tool.id}
