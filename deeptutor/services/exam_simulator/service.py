@@ -14,6 +14,8 @@ from deeptutor.services.exam_simulator.grading import (
     grade_written_rubric,
 )
 from deeptutor.services.exam_simulator.models import ExamAttempt, ExamQuestion, ExamTemplate, SubmitResult
+from deeptutor.services.llm.client import get_llm_client
+from deeptutor.utils.json_parser import parse_json_response
 
 _DEFAULT_WRITTEN_RUBRIC: list[dict[str, Any]] = [
     {"criterion": "uses relevant technical vocabulary", "weight": 2},
@@ -49,100 +51,123 @@ def _question_ids_from_mix(mcq: int, short: int, long: int) -> tuple[str, ...]:
     return tuple(ids)
 
 
-def _build_mcq_bundle(topic: str, index: int, qid: str) -> tuple[ExamQuestion, str]:
-    """Return question + correct letter (A–D)."""
-    seed = sum(ord(c) for c in qid) + index * 17
-    correct_slot = seed % 4
-    distractors = [
-        (
-            "wrong",
-            f"Confuses vocabulary or notation that is usually kept distinct in “{topic}”.",
-        ),
-        (
-            "wrong",
-            f"States a plausible but overly narrow claim that is not generally true for “{topic}”.",
-        ),
-        (
-            "wrong",
-            f"Imports intuition from a different area and misapplies it to “{topic}”.",
-        ),
-    ]
-    correct_text = (
-        f"Matches how textbooks typically introduce a central definition or assumption in “{topic}”."
-    )
-    labels: list[str] = [""] * 4
-    labels[correct_slot] = correct_text
-    wrong_slots = [i for i in range(4) if i != correct_slot]
-    for slot, (_, text) in zip(wrong_slots, distractors, strict=False):
-        labels[slot] = text
-    prompt = (
-        f"Multiple choice ({index + 1}): choose the option that best fits standard presentations "
-        f"of “{topic}”."
-    )
-    letter = chr(ord("A") + correct_slot)
-    q = ExamQuestion(
-        question_id=qid,
-        qtype="mcq",
-        prompt=prompt,
-        marks=2,
-        options=tuple(labels),
-    )
-    return q, letter
-
-
-def _build_all_questions(
+async def _build_all_questions(
     topic: str,
     qids: tuple[str, ...],
 ) -> tuple[tuple[ExamQuestion, ...], dict[str, str], dict[str, dict[str, Any]]]:
+    mcq_qids = [q for q in qids if q.startswith("mcq_")]
+    short_qids = [q for q in qids if q.startswith("short_")]
+    long_qids = [q for q in qids if q.startswith("long_")]
+
+    prompt = f"""Generate an exam on the topic of "{topic}".
+It must contain:
+- {len(mcq_qids)} multiple-choice questions (each with exactly 4 options).
+- {len(short_qids)} short-answer questions.
+- {len(long_qids)} long-answer questions.
+
+Return the result as a JSON object matching this schema:
+{{
+  "mcq": [
+    {{
+      "prompt": "...",
+      "options": ["...", "...", "...", "..."],
+      "correct_letter": "A"
+    }}
+  ],
+  "short": [
+    {{
+      "prompt": "...",
+      "model_answer": "..."
+    }}
+  ],
+  "long": [
+    {{
+      "prompt": "...",
+      "model_answer": "..."
+    }}
+  ]
+}}
+Ensure the correct_letter corresponds exactly to one of the 4 options (A=index 0, B=1, C=2, D=3).
+"""
+    llm = get_llm_client()
+    response_text = await llm.complete(
+        prompt=prompt,
+        system_prompt="You are an expert exam generator. Follow the JSON schema strictly.",
+    )
+    
+    data = parse_json_response(response_text)
+    
     mcq_key: dict[str, str] = {}
     written_specs: dict[str, dict[str, Any]] = {}
     merged: list[ExamQuestion] = []
-    mcq_index = 0
-    for qid in qids:
-        if qid.startswith("mcq_"):
-            q, letter = _build_mcq_bundle(topic, mcq_index, qid)
-            mcq_index += 1
-            merged.append(q)
-            mcq_key[qid] = letter
-        elif qid.startswith("short_"):
-            idx = int(qid.split("_", 1)[1])
-            written_specs[qid] = {
-                "max_marks": 5,
-                "rubric": list(_DEFAULT_WRITTEN_RUBRIC),
-                "model_answer": "",
-            }
-            merged.append(
-                ExamQuestion(
-                    question_id=qid,
-                    qtype="short",
-                    prompt=(
-                        f"Short answer ({idx}, 5 marks): In 2–4 sentences, explain one core idea "
-                        f"from “{topic}” that a learner should be able to articulate under exam pressure."
-                    ),
-                    marks=5,
-                    options=(),
-                )
+    
+    if not isinstance(data, dict):
+        data = {}
+        
+    mcq_data = data.get("mcq", [])
+    if not isinstance(mcq_data, list):
+        mcq_data = []
+        
+    for i, qid in enumerate(mcq_qids):
+        item = mcq_data[i] if i < len(mcq_data) else {}
+        options = item.get("options", ["A", "B", "C", "D"])
+        letter = item.get("correct_letter", "A")
+        if not isinstance(options, list) or len(options) != 4:
+            options = ["A", "B", "C", "D"]
+            
+        merged.append(
+            ExamQuestion(
+                question_id=qid,
+                qtype="mcq",
+                prompt=item.get("prompt", f"MCQ on {topic}"),
+                marks=2,
+                options=tuple(options),
             )
-        elif qid.startswith("long_"):
-            idx = int(qid.split("_", 1)[1])
-            written_specs[qid] = {
-                "max_marks": 10,
-                "rubric": list(_DEFAULT_WRITTEN_RUBRIC),
-                "model_answer": "",
-            }
-            merged.append(
-                ExamQuestion(
-                    question_id=qid,
-                    qtype="long",
-                    prompt=(
-                        f"Long answer ({idx}, 10 marks): For “{topic}”, compare two related ideas "
-                        f"(definitions, methods, or common setups), state how they interact, and justify "
-                        f"your reasoning in about 150–250 words."
-                    ),
-                    marks=10,
-                    options=(),
-                )
+        )
+        mcq_key[qid] = letter
+
+    short_data = data.get("short", [])
+    if not isinstance(short_data, list):
+        short_data = []
+        
+    for i, qid in enumerate(short_qids):
+        item = short_data[i] if i < len(short_data) else {}
+        written_specs[qid] = {
+            "max_marks": 5,
+            "rubric": list(_DEFAULT_WRITTEN_RUBRIC),
+            "model_answer": item.get("model_answer", ""),
+        }
+        merged.append(
+            ExamQuestion(
+                question_id=qid,
+                qtype="short",
+                prompt=item.get("prompt", f"Short answer on {topic}"),
+                marks=5,
+                options=(),
             )
+        )
+
+    long_data = data.get("long", [])
+    if not isinstance(long_data, list):
+        long_data = []
+        
+    for i, qid in enumerate(long_qids):
+        item = long_data[i] if i < len(long_data) else {}
+        written_specs[qid] = {
+            "max_marks": 10,
+            "rubric": list(_DEFAULT_WRITTEN_RUBRIC),
+            "model_answer": item.get("model_answer", ""),
+        }
+        merged.append(
+            ExamQuestion(
+                question_id=qid,
+                qtype="long",
+                prompt=item.get("prompt", f"Long answer on {topic}"),
+                marks=10,
+                options=(),
+            )
+        )
+
     return tuple(merged), mcq_key, written_specs
 
 
@@ -154,11 +179,11 @@ class ExamSimulatorService:
         self._templates: dict[str, ExamTemplate] = {}
         self._attempts: dict[str, ExamAttempt] = {}
 
-    def generate_template(self, cfg: ExamSimulatorRequestConfig) -> ExamTemplate:
+    async def generate_template(self, cfg: ExamSimulatorRequestConfig) -> ExamTemplate:
         mix = cfg.question_mix
         assert mix is not None
         qids = _question_ids_from_mix(mix.mcq, mix.short, mix.long)
-        questions, mcq_key, written = _build_all_questions(cfg.topic, qids)
+        questions, mcq_key, written = await _build_all_questions(cfg.topic, qids)
         template = ExamTemplate(
             id=str(uuid.uuid4()),
             topic=cfg.topic,

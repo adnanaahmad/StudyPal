@@ -64,7 +64,7 @@ class ExamSimulatorCapability(BaseCapability):
             stage="generation",
         )
         assert cfg.question_mix is not None
-        template = service.generate_template(cfg)
+        template = await service.generate_template(cfg)
         attempt = service.start_attempt(template, user_id)
         payload = service.public_attempt_payload(attempt, template)
         await stream.progress(
