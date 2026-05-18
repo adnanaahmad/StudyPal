@@ -174,6 +174,18 @@ async def complete(
     Returns:
         str: The LLM response
     """
+    # Dynamic provider auto-detection when a custom model is passed
+    if model:
+        from .provider_registry import find_by_model
+        import os
+        spec = find_by_model(model)
+        if spec and (spec.name != binding or _should_use_local(base_url)):
+            binding = spec.name
+            base_url = spec.default_api_base
+            api_key = os.getenv(spec.env_key) or api_key
+            if hasattr(spec, "api_version") and getattr(spec, "api_version", None):
+                api_version = spec.api_version
+
     provider_name = binding or "openai"
     provider_mode = "standard"
     extra_headers: dict[str, str] = {}
@@ -350,6 +362,18 @@ async def stream(
     **kwargs: object,
 ) -> AsyncGenerator[str, None]:
     """Stream LLM responses with retry handling."""
+    # Dynamic provider auto-detection when a custom model is passed
+    if model:
+        from .provider_registry import find_by_model
+        import os
+        spec = find_by_model(model)
+        if spec and (spec.name != binding or _should_use_local(base_url)):
+            binding = spec.name
+            base_url = spec.default_api_base
+            api_key = os.getenv(spec.env_key) or api_key
+            if hasattr(spec, "api_version") and getattr(spec, "api_version", None):
+                api_version = spec.api_version
+
     provider_name = binding or "openai"
     provider_mode = "standard"
     extra_headers: dict[str, str] = {}

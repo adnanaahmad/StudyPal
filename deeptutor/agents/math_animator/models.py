@@ -2,7 +2,59 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+import json
+from typing import Any
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+def _normalize_list_strings(v: Any) -> list[str]:
+    """Helper to normalize a list of strings, handling cases where LLM returns dicts."""
+    if isinstance(v, dict):
+        # Handle case where LLM returns a dict instead of a list
+        normalized = []
+        for k, val in v.items():
+            if isinstance(val, (str, int, float)):
+                normalized.append(f"{k}: {val}")
+            else:
+                normalized.append(f"{k}: {json.dumps(val, ensure_ascii=False)}")
+        return normalized
+
+    if not isinstance(v, list):
+        if v is None:
+            return []
+        return [str(v)]
+
+    normalized = []
+    for item in v:
+        if isinstance(item, str):
+            normalized.append(item)
+        elif isinstance(item, dict):
+            if len(item) == 1:
+                k, val = list(item.items())[0]
+                normalized.append(f"{k}: {val}")
+            else:
+                normalized.append(json.dumps(item, ensure_ascii=False))
+        else:
+            normalized.append(str(item))
+    return normalized
+
+
+def _normalize_string(v: Any) -> str:
+    """Helper to normalize a string field, handling cases where LLM returns dicts or lists."""
+    if isinstance(v, dict):
+        parts = []
+        for k, val in v.items():
+            if isinstance(val, (dict, list)):
+                parts.append(f"{k}: {json.dumps(val, ensure_ascii=False)}")
+            else:
+                parts.append(f"{k}: {val}")
+        return "\n".join(parts)
+    if isinstance(v, list):
+        return "\n".join(str(item) for item in v)
+    if v is None:
+        return ""
+    return str(v)
 
 
 class ConceptAnalysis(BaseModel):
@@ -15,6 +67,16 @@ class ConceptAnalysis(BaseModel):
     reference_usage: str = ""
     output_intent: str = ""
 
+    @field_validator("math_focus", "visual_targets", "narrative_steps", mode="before")
+    @classmethod
+    def normalize_lists(cls, v: Any) -> list[str]:
+        return _normalize_list_strings(v)
+
+    @field_validator("learning_goal", "reference_usage", "output_intent", mode="before")
+    @classmethod
+    def normalize_strings(cls, v: Any) -> str:
+        return _normalize_string(v)
+
 
 class SceneDesign(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -25,6 +87,22 @@ class SceneDesign(BaseModel):
     animation_notes: list[str] = Field(default_factory=list)
     image_plan: list[str] = Field(default_factory=list)
     code_constraints: list[str] = Field(default_factory=list)
+
+    @field_validator(
+        "scene_outline",
+        "animation_notes",
+        "image_plan",
+        "code_constraints",
+        mode="before",
+    )
+    @classmethod
+    def normalize_lists(cls, v: Any) -> list[str]:
+        return _normalize_list_strings(v)
+
+    @field_validator("visual_style", "title", mode="before")
+    @classmethod
+    def normalize_strings(cls, v: Any) -> str:
+        return _normalize_string(v)
 
 
 class GeneratedCode(BaseModel):
@@ -41,6 +119,11 @@ class SummaryPayload(BaseModel):
     user_request: str = ""
     generated_output: str = ""
     key_points: list[str] = Field(default_factory=list)
+
+    @field_validator("key_points", mode="before")
+    @classmethod
+    def normalize_lists(cls, v: Any) -> list[str]:
+        return _normalize_list_strings(v)
 
 
 class RenderedArtifact(BaseModel):
