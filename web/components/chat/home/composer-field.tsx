@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 export const INPUT_CLS =
-  "h-[30px] rounded-lg border border-[var(--border)]/30 bg-[var(--background)]/50 px-2.5 text-[12px] text-[var(--foreground)] outline-none transition-colors hover:border-[var(--border)]/50 focus:border-[var(--primary)]/35 placeholder:text-[var(--muted-foreground)]/40";
+  "h-[30px] rounded-lg border border-border bg-background px-2.5 text-[12px] text-foreground outline-none transition-colors hover:border-primary/50 focus:border-primary placeholder:text-muted-foreground/60";
 
 export function Field({
   label,

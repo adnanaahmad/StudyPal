@@ -40,6 +40,23 @@ def _normalize_list_strings(v: Any) -> list[str]:
     return normalized
 
 
+def _normalize_string(v: Any) -> str:
+    """Helper to normalize a string field, handling cases where LLM returns dicts or lists."""
+    if isinstance(v, dict):
+        parts = []
+        for k, val in v.items():
+            if isinstance(val, (dict, list)):
+                parts.append(f"{k}: {json.dumps(val, ensure_ascii=False)}")
+            else:
+                parts.append(f"{k}: {val}")
+        return "\n".join(parts)
+    if isinstance(v, list):
+        return "\n".join(str(item) for item in v)
+    if v is None:
+        return ""
+    return str(v)
+
+
 class ConceptAnalysis(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -54,6 +71,11 @@ class ConceptAnalysis(BaseModel):
     @classmethod
     def normalize_lists(cls, v: Any) -> list[str]:
         return _normalize_list_strings(v)
+
+    @field_validator("learning_goal", "reference_usage", "output_intent", mode="before")
+    @classmethod
+    def normalize_strings(cls, v: Any) -> str:
+        return _normalize_string(v)
 
 
 class SceneDesign(BaseModel):
@@ -76,6 +98,11 @@ class SceneDesign(BaseModel):
     @classmethod
     def normalize_lists(cls, v: Any) -> list[str]:
         return _normalize_list_strings(v)
+
+    @field_validator("visual_style", "title", mode="before")
+    @classmethod
+    def normalize_strings(cls, v: Any) -> str:
+        return _normalize_string(v)
 
 
 class GeneratedCode(BaseModel):
