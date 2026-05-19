@@ -15,11 +15,12 @@ def create_deeptutor_provider() -> LLMProvider:
     from deeptutor.services.llm.config import get_llm_config
     from deeptutor.services.provider_registry import find_by_model, find_by_name
 
+    import os
     cfg = get_llm_config()
 
     api_key = cfg.api_key or None
     api_base = cfg.effective_url or cfg.base_url or None
-    model = cfg.model
+    model = os.getenv("TUTORBOT_MODEL") or cfg.model
     extra_headers = cfg.extra_headers or {}
     provider_name = cfg.provider_name or None
 
