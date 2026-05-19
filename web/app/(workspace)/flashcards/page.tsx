@@ -29,7 +29,7 @@ export default function FlashcardsPage() {
   );
 
   const starterPrompts = [
-    "Make 8 flashcards on photosynthesis for an AP Bio quiz",
+    "Make 3 flashcards on photosynthesis for an AP Bio quiz",
     "Quiz me on the first 20 elements with cloze deletions",
     "Generate cards on the Spanish present tense — mix Q/A and cloze",
   ];

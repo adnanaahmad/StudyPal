@@ -174,44 +174,43 @@ async def complete(
     Returns:
         str: The LLM response
     """
-    # Dynamic provider auto-detection when a custom model is passed
+    # 1. Resolve defaults from config first
+    config = get_llm_config()
+    eff_model = model or config.model
+    eff_api_key = api_key if api_key is not None else config.api_key
+    eff_base_url = base_url or config.base_url
+    eff_api_version = api_version or config.api_version
+    eff_binding = binding or config.binding or "openai"
+
+    # 2. Dynamic provider auto-detection when a custom model is passed
     if model:
         from .provider_registry import find_by_model
         import os
         spec = find_by_model(model)
-        if spec and (spec.name != binding or _should_use_local(base_url)):
-            binding = spec.name
-            base_url = spec.default_api_base
-            api_key = os.getenv(spec.env_key) or api_key
-            if hasattr(spec, "api_version") and getattr(spec, "api_version", None):
-                api_version = spec.api_version
+        if spec:
+            model_prefix = model.lower().split("/", 1)[0].replace("-", "_") if "/" in model else ""
+            is_explicit = (model_prefix == spec.name)
+            is_currently_local = _should_use_local(eff_base_url)
+            
+            # Only hijack if explicitly prefixed (e.g. nvidia/nemotron) OR if we are not currently pointing to a local provider.
+            if (is_explicit or not is_currently_local) and (spec.name != eff_binding):
+                eff_binding = spec.name
+                eff_base_url = spec.default_api_base
+                eff_api_key = os.getenv(spec.env_key) or eff_api_key
+                if hasattr(spec, "api_version") and getattr(spec, "api_version", None):
+                    eff_api_version = spec.api_version
 
-    provider_name = binding or "openai"
+    provider_name = eff_binding
     provider_mode = "standard"
-    extra_headers: dict[str, str] = {}
-    reasoning_effort = cast("str | None", kwargs.pop("reasoning_effort", None))
+    extra_headers: dict[str, str] = getattr(config, "extra_headers", {}) or {}
+    reasoning_effort = cast("str | None", kwargs.pop("reasoning_effort", getattr(config, "reasoning_effort", None)))
 
-    if not model or not base_url or api_key is None or not binding:
-        config = get_llm_config()
-        model = model or config.model
-        api_key = api_key if api_key is not None else config.api_key
-        base_url = base_url or config.base_url
-        api_version = api_version or config.api_version
-        binding = binding or config.binding or "openai"
-        provider_name = getattr(config, "provider_name", binding or "openai")
-        provider_mode = getattr(config, "provider_mode", "standard")
-        extra_headers = getattr(config, "extra_headers", {}) or {}
-        if reasoning_effort is None:
-            reasoning_effort = getattr(config, "reasoning_effort", None)
-    else:
-        from .provider_registry import find_by_name
+    from .provider_registry import find_by_name
+    spec = find_by_name(provider_name)
+    if spec is not None:
+        provider_mode = spec.mode
 
-        provider_name = binding or "openai"
-        spec = find_by_name(provider_name)
-        if spec is not None:
-            provider_mode = spec.mode
-
-    use_local_fallback = _should_use_local(base_url)
+    use_local_fallback = _should_use_local(eff_base_url)
 
     def _is_retriable_llm_api_error(exc: BaseException) -> bool:
         """Delegate retriable checks to shared helper."""
@@ -337,11 +336,11 @@ async def complete(
     return await _do_complete(
         prompt_value=prompt,
         system_prompt_value=system_prompt,
-        model_value=model,
-        api_key_value=api_key,
-        base_url_value=base_url,
-        api_version_value=api_version,
-        binding_value=binding or "openai",
+        model_value=eff_model,
+        api_key_value=eff_api_key,
+        base_url_value=eff_base_url,
+        api_version_value=eff_api_version,
+        binding_value=eff_binding,
         extra_kwargs=extra_kwargs,
         messages_value=messages,
     )
@@ -362,44 +361,43 @@ async def stream(
     **kwargs: object,
 ) -> AsyncGenerator[str, None]:
     """Stream LLM responses with retry handling."""
-    # Dynamic provider auto-detection when a custom model is passed
+    # 1. Resolve defaults from config first
+    config = get_llm_config()
+    eff_model = model or config.model
+    eff_api_key = api_key if api_key is not None else config.api_key
+    eff_base_url = base_url or config.base_url
+    eff_api_version = api_version or config.api_version
+    eff_binding = binding or config.binding or "openai"
+
+    # 2. Dynamic provider auto-detection when a custom model is passed
     if model:
         from .provider_registry import find_by_model
         import os
         spec = find_by_model(model)
-        if spec and (spec.name != binding or _should_use_local(base_url)):
-            binding = spec.name
-            base_url = spec.default_api_base
-            api_key = os.getenv(spec.env_key) or api_key
-            if hasattr(spec, "api_version") and getattr(spec, "api_version", None):
-                api_version = spec.api_version
+        if spec:
+            model_prefix = model.lower().split("/", 1)[0].replace("-", "_") if "/" in model else ""
+            is_explicit = (model_prefix == spec.name)
+            is_currently_local = _should_use_local(eff_base_url)
+            
+            # Only hijack if explicitly prefixed OR if we are not currently pointing to a local provider.
+            if (is_explicit or not is_currently_local) and (spec.name != eff_binding):
+                eff_binding = spec.name
+                eff_base_url = spec.default_api_base
+                eff_api_key = os.getenv(spec.env_key) or eff_api_key
+                if hasattr(spec, "api_version") and getattr(spec, "api_version", None):
+                    eff_api_version = spec.api_version
 
-    provider_name = binding or "openai"
+    provider_name = eff_binding
     provider_mode = "standard"
-    extra_headers: dict[str, str] = {}
-    reasoning_effort = cast("str | None", kwargs.pop("reasoning_effort", None))
+    extra_headers: dict[str, str] = getattr(config, "extra_headers", {}) or {}
+    reasoning_effort = cast("str | None", kwargs.pop("reasoning_effort", getattr(config, "reasoning_effort", None)))
 
-    if not model or not base_url or api_key is None or not binding:
-        config = get_llm_config()
-        model = model or config.model
-        api_key = api_key if api_key is not None else config.api_key
-        base_url = base_url or config.base_url
-        api_version = api_version or config.api_version
-        binding = binding or config.binding or "openai"
-        provider_name = getattr(config, "provider_name", binding or "openai")
-        provider_mode = getattr(config, "provider_mode", "standard")
-        extra_headers = getattr(config, "extra_headers", {}) or {}
-        if reasoning_effort is None:
-            reasoning_effort = getattr(config, "reasoning_effort", None)
-    else:
-        from .provider_registry import find_by_name
+    from .provider_registry import find_by_name
+    spec = find_by_name(provider_name)
+    if spec is not None:
+        provider_mode = spec.mode
 
-        provider_name = binding or "openai"
-        spec = find_by_name(provider_name)
-        if spec is not None:
-            provider_mode = spec.mode
-
-    use_local_fallback = _should_use_local(base_url)
+    use_local_fallback = _should_use_local(eff_base_url)
     extra_kwargs: CallKwargs = dict(kwargs)
     extra_kwargs.pop("messages", None)
     extra_kwargs.pop("extra_headers", None)
@@ -428,10 +426,10 @@ async def stream(
                     prompt=prompt,
                     system_prompt=system_prompt,
                     provider_name=provider_name,
-                    model=model,
-                    api_key=api_key,
-                    base_url=base_url,
-                    api_version=api_version,
+                    model=eff_model,
+                    api_key=eff_api_key,
+                    base_url=eff_base_url,
+                    api_version=eff_api_version,
                     messages=messages,
                     extra_headers=extra_headers or None,
                     reasoning_effort=reasoning_effort,
@@ -443,9 +441,9 @@ async def stream(
                 async for chunk in local_provider.stream(
                     prompt=prompt,
                     system_prompt=system_prompt,
-                    model=model,
-                    api_key=api_key,
-                    base_url=base_url,
+                    model=eff_model,
+                    api_key=eff_api_key,
+                    base_url=eff_base_url,
                     messages=messages,
                     **extra_kwargs,
                 ):
@@ -458,11 +456,11 @@ async def stream(
                 async for chunk in cloud_provider.stream(
                     prompt=prompt,
                     system_prompt=system_prompt,
-                    model=model,
-                    api_key=api_key,
-                    base_url=base_url,
-                    api_version=api_version,
-                    binding=direct_binding if provider_mode == "direct" else (binding or "openai"),
+                    model=eff_model,
+                    api_key=eff_api_key,
+                    base_url=eff_base_url,
+                    api_version=eff_api_version,
+                    binding=direct_binding if provider_mode == "direct" else eff_binding,
                     messages=messages,
                     extra_headers=extra_headers or None,
                     **extra_kwargs,

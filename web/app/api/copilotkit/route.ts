@@ -24,7 +24,7 @@ const runtime = new CopilotRuntime();
 
 export const POST = async (req: NextRequest) => {
   const referer = req.headers.get("referer");
-  const useQwen = referer?.includes("/mindmap") || referer?.includes("/podcasts") || referer?.includes("/decks");
+  const useQwen = referer?.includes("/mindmap") || referer?.includes("/podcasts") || referer?.includes("/decks") || referer?.includes("/co-writer");
   const model = useQwen ? "qwen2.5:7b" : COPILOT_MODEL;
 
   const serviceAdapter = new OpenAIAdapter({

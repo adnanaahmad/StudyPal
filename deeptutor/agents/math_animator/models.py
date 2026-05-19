@@ -111,6 +111,21 @@ class GeneratedCode(BaseModel):
     code: str = ""
     rationale: str = ""
 
+    @field_validator("code", mode="before")
+    @classmethod
+    def clean_code(cls, v: Any) -> str:
+        code_str = _normalize_string(v)
+        code_str = code_str.strip()
+        if code_str.startswith(":"):
+            code_str = code_str.lstrip(":\n\t ")
+        if code_str.startswith("```python"):
+            code_str = code_str[len("```python"):]
+        elif code_str.startswith("```"):
+            code_str = code_str[len("```"):]
+        if code_str.endswith("```"):
+            code_str = code_str[:-3]
+        return code_str.strip()
+
 
 class SummaryPayload(BaseModel):
     model_config = ConfigDict(extra="ignore")

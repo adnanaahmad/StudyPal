@@ -31,9 +31,9 @@ export default function PlannerPage() {
   const nextTask = tasks.find((task) => task.status === "pending") ?? null;
 
   const starterPrompts = [
-    "Plan my week for calculus: exam is in 10 days, I have 45 mins/day",
-    "I missed yesterday's tasks, replan the remaining week intelligently",
-    "I'm tired today, convert my plan into low-energy 20 minute sessions",
+    "Create a 3-day study plan (30 mins/day) for an Algorithms exam. Divide the schedule among Brute Force, Greedy Algorithms, Dynamic Programming, and Backtracking.",
+    "Create a 10-day study plan (45 mins/day) for a Calculus exam. Focus on key topics like Limits, Derivatives, Integrals, and their practical applications.",
+    "I missed yesterday's scheduled sessions. Please replan the remaining week intelligently, adapting the upcoming daily durations to fit my time limits.",
   ];
 
   const handleCopyPrompt = async (prompt: string) => {
@@ -71,166 +71,165 @@ export default function PlannerPage() {
         ) : (
           <>
             <div className="flex flex-1 flex-col overflow-y-auto p-4 md:p-6">
-          <div className="grid gap-3 md:grid-cols-3">
-            <MetricCard
-              icon={CalendarClock}
-              label={t("Sessions Today")}
-              value={`${todayTasks.length}`}
-              subtext={t("{{mins}} min scheduled", { mins: minutesToday })}
-            />
-            <MetricCard
-              icon={CheckCircle2}
-              label={t("Completed")}
-              value={`${completedToday}`}
-              subtext={t("{{rate}}% completion", { rate: completionRate })}
-            />
-            <MetricCard
-              icon={Flame}
-              label={t("Focus Budget")}
-              value={`${api.state.availableMinutesToday}m`}
-              subtext={t("Available time today")}
-            />
-          </div>
-
-          {isEmpty ? (
-            <div className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--card)]/95 p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--secondary)] text-[var(--primary)]">
-                  <CalendarClock size={22} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
-                    {t("Learning OS")}
-                  </h2>
-                  <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-                    {t(
-                      "Tell the planner your goal, exam date, and available time. It will build a realistic week plan and adapt when your schedule changes.",
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-2 sm:grid-cols-3">
-                <MiniFeature
-                  icon={Clock3}
-                  title={t("Auto Scheduling")}
-                  text={t("Breaks goals into daily sessions that fit your real time budget.")}
+              <div className="grid gap-3 md:grid-cols-3">
+                <MetricCard
+                  icon={CalendarClock}
+                  label={t("Sessions Today")}
+                  value={`${todayTasks.length}`}
+                  subtext={t("{{mins}} min scheduled", { mins: minutesToday })}
                 />
-                <MiniFeature
-                  icon={Sparkles}
-                  title={t("Smart Replans")}
-                  text={t("If you miss a day, ask the agent to rebalance the week instantly.")}
-                />
-                <MiniFeature
+                <MetricCard
                   icon={CheckCircle2}
-                  title={t("Action First")}
-                  text={t("Always know your next best study block and why it matters now.")}
+                  label={t("Completed")}
+                  value={`${completedToday}`}
+                  subtext={t("{{rate}}% completion", { rate: completionRate })}
+                />
+                <MetricCard
+                  icon={Flame}
+                  label={t("Focus Budget")}
+                  value={`${api.state.availableMinutesToday}m`}
+                  subtext={t("Available time today")}
                 />
               </div>
 
-              <div className="mt-5">
-                <p className="mb-2 text-xs font-medium text-[var(--muted-foreground)]">
-                  {t("Suggested prompts (copy to chat)")}
-                </p>
-                <div className="space-y-2">
-                  {starterPrompts.map((prompt) => (
-                    <button
-                      key={prompt}
-                      onClick={() => void handleCopyPrompt(prompt)}
-                      className="flex w-full items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-left text-xs text-[var(--foreground)] transition-colors hover:bg-[var(--secondary)]"
-                    >
-                      <span>{prompt}</span>
-                      <span className="ml-3 inline-flex items-center gap-1 text-[10px] text-[var(--muted-foreground)]">
-                        <Copy size={12} />
-                        {copiedPrompt === prompt ? t("Copied") : t("Copy")}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-5 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
-              <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4">
-                <h3 className="text-sm font-semibold text-[var(--foreground)]">{t("This Week")}</h3>
-                <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                  {t("Goal: {{goal}}", { goal: api.state.goal ?? "Not set yet" })}
-                </p>
-                <div className="mt-3 space-y-2">
-                  {tasks.map((task) => (
-                    <button
-                      key={task.id}
-                      onClick={() => api.selectTask({ id: task.id })}
-                      className={`w-full rounded-xl border px-3 py-2 text-left transition-colors ${
-                        api.state.selectedTaskId === task.id
-                          ? "border-[var(--primary)] bg-[var(--primary)]/5"
-                          : "border-[var(--border)] bg-[var(--background)] hover:bg-[var(--secondary)]"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="truncate text-xs font-medium text-[var(--foreground)]">{task.title}</p>
-                        <span className="shrink-0 text-[10px] text-[var(--muted-foreground)]">
-                          {task.durationMin}m
-                        </span>
-                      </div>
-                      <div className="mt-1 flex items-center justify-between text-[10px] text-[var(--muted-foreground)]">
-                        <span>{task.subject}</span>
-                        <span>{task.date}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4">
-                <h3 className="text-sm font-semibold text-[var(--foreground)]">{t("Next Best Session")}</h3>
-                {nextTask ? (
-                  <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
-                    <p className="text-sm font-semibold text-[var(--foreground)]">{nextTask.title}</p>
-                    <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                      {nextTask.subject} • {nextTask.durationMin}m • {nextTask.date}
-                    </p>
-                    <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-                      {nextTask.reason ?? t("No rationale yet. Ask the agent: why this task now?")}
-                    </p>
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        onClick={() => api.completeTask({ id: nextTask.id })}
-                        className="rounded-lg bg-[var(--primary)] px-3 py-1.5 text-xs font-medium text-[var(--primary-foreground)]"
-                      >
-                        {t("Mark done")}
-                      </button>
-                      <button
-                        onClick={() => api.updateTask({ id: nextTask.id, status: "missed" })}
-                        className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--muted-foreground)]"
-                      >
-                        {t("Missed")}
-                      </button>
+              {isEmpty ? (
+                <div className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--card)]/95 p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--secondary)] text-[var(--primary)]">
+                      <CalendarClock size={22} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-lg font-semibold tracking-tight text-[var(--foreground)]">
+                        {t("Learning OS")}
+                      </h2>
+                      <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                        {t(
+                          "Tell the planner your goal, exam date, and available time. It will build a realistic week plan and adapt when your schedule changes.",
+                        )}
+                      </p>
                     </div>
                   </div>
-                ) : (
-                  <p className="mt-3 text-xs text-[var(--muted-foreground)]">
-                    {t("All tasks are completed. Ask the planner to generate the next set.")}
-                  </p>
-                )}
-              </section>
-            </div>
-          )}
-        </div>
 
-        <div className="planner-chat-clean">
-          <CopilotSidebar
-            key={copilotSidebarKey}
-            defaultOpen={false}
-            clickOutsideToClose={true}
-            labels={{
-              title: "",
-              initial: t(
-                "Hi! I can build and adapt your study plan. Tell me your goal, exam date, and available time.",
-              ),
-              placeholder: t("Ask me to create, rebalance, or optimize your study week..."),
-            }}
-          />
+                  <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                    <MiniFeature
+                      icon={Clock3}
+                      title={t("Auto Scheduling")}
+                      text={t("Breaks goals into daily sessions that fit your real time budget.")}
+                    />
+                    <MiniFeature
+                      icon={Sparkles}
+                      title={t("Smart Replans")}
+                      text={t("If you miss a day, ask the agent to rebalance the week instantly.")}
+                    />
+                    <MiniFeature
+                      icon={CheckCircle2}
+                      title={t("Action First")}
+                      text={t("Always know your next best study block and why it matters now.")}
+                    />
+                  </div>
+
+                  <div className="mt-5">
+                    <p className="mb-2 text-xs font-medium text-[var(--muted-foreground)]">
+                      {t("Suggested prompts (copy to chat)")}
+                    </p>
+                    <div className="space-y-2">
+                      {starterPrompts.map((prompt) => (
+                        <button
+                          key={prompt}
+                          onClick={() => void handleCopyPrompt(prompt)}
+                          className="flex w-full items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-left text-xs text-[var(--foreground)] transition-colors hover:bg-[var(--secondary)]"
+                        >
+                          <span>{prompt}</span>
+                          <span className="ml-3 inline-flex items-center gap-1 text-[10px] text-[var(--muted-foreground)]">
+                            <Copy size={12} />
+                            {copiedPrompt === prompt ? t("Copied") : t("Copy")}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-5 grid gap-4 lg:grid-cols-[1.2fr_1fr]">
+                  <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4">
+                    <h3 className="text-sm font-semibold text-[var(--foreground)]">{t("This Week")}</h3>
+                    <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                      {t("Goal: {{goal}}", { goal: api.state.goal ?? "Not set yet" })}
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      {tasks.map((task) => (
+                        <button
+                          key={task.id}
+                          onClick={() => api.selectTask({ id: task.id })}
+                          className={`w-full rounded-xl border px-3 py-2 text-left transition-colors ${api.state.selectedTaskId === task.id
+                            ? "border-[var(--primary)] bg-[var(--primary)]/5"
+                            : "border-[var(--border)] bg-[var(--background)] hover:bg-[var(--secondary)]"
+                            }`}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="truncate text-xs font-medium text-[var(--foreground)]">{task.title}</p>
+                            <span className="shrink-0 text-[10px] text-[var(--muted-foreground)]">
+                              {task.durationMin}m
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center justify-between text-[10px] text-[var(--muted-foreground)]">
+                            <span>{task.subject}</span>
+                            <span>{task.date}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+
+                  <section className="rounded-2xl border border-[var(--border)] bg-[var(--card)]/80 p-4">
+                    <h3 className="text-sm font-semibold text-[var(--foreground)]">{t("Next Best Session")}</h3>
+                    {nextTask ? (
+                      <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--background)] p-3">
+                        <p className="text-sm font-semibold text-[var(--foreground)]">{nextTask.title}</p>
+                        <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                          {nextTask.subject} • {nextTask.durationMin}m • {nextTask.date}
+                        </p>
+                        <p className="mt-2 text-xs text-[var(--muted-foreground)]">
+                          {nextTask.reason ?? t("No rationale yet. Ask the agent: why this task now?")}
+                        </p>
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            onClick={() => api.completeTask({ id: nextTask.id })}
+                            className="rounded-lg bg-[var(--primary)] px-3 py-1.5 text-xs font-medium text-[var(--primary-foreground)]"
+                          >
+                            {t("Mark done")}
+                          </button>
+                          <button
+                            onClick={() => api.updateTask({ id: nextTask.id, status: "missed" })}
+                            className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--muted-foreground)]"
+                          >
+                            {t("Missed")}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-xs text-[var(--muted-foreground)]">
+                        {t("All tasks are completed. Ask the planner to generate the next set.")}
+                      </p>
+                    )}
+                  </section>
+                </div>
+              )}
+            </div>
+
+            <div className="planner-chat-clean">
+              <CopilotSidebar
+                key={copilotSidebarKey}
+                defaultOpen={false}
+                clickOutsideToClose={true}
+                labels={{
+                  title: "",
+                  initial: t(
+                    "Hi! I can build and adapt your study plan. Tell me your goal, exam date, and available time.",
+                  ),
+                  placeholder: t("Ask me to create, rebalance, or optimize your study week..."),
+                }}
+              />
             </div>
           </>
         )}
