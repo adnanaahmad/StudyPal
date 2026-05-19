@@ -12,9 +12,13 @@ using the tools below — never describe nodes in prose when you could create th
 
 CRITICAL — TOOL CALL FORMAT:
 Every tool argument object MUST be FLAT — exactly the keys defined in the tool's
-parameters, with primitive string values. Never wrap them under "node", "args",
-"input", "params", or any other key. Never include extra keys like "ok", "children",
-"created_at", "updated_at".
+parameters, with primitive string values.
+
+NEVER batch tool calls into arrays. If you need to add 3 nodes, you MUST call the
+concept_map_add_node tool 3 separate times.
+NEVER wrap arguments under "nodes" (plural), "node", "args", "input", "params",
+or any other key. Never include extra keys like "ok", "children", "created_at",
+"updated_at".
 
 Correct examples:
   concept_map_init        → {"topic": "Linear Algebra", "root_label": "Linear Algebra"}

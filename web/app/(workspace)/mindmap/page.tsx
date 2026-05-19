@@ -29,7 +29,7 @@ export default function MindmapPage() {
 
   const isEmpty = !api.state.rootId;
   const starterPrompts = [
-    "Build a concept map about linear algebra",
+    "Build a brief concept map about linear algebra  using these topics vectors, linear transformation, matrix and Eigenvalues & Eigenvectors",
     "Create a mindmap for World War II with key fronts and events",
     "Map the core topics of calculus for exam prep",
   ];

@@ -24,8 +24,19 @@ const runtime = new CopilotRuntime();
 
 export const POST = async (req: NextRequest) => {
   const referer = req.headers.get("referer");
-  const useQwen = referer?.includes("/mindmap") || referer?.includes("/podcasts") || referer?.includes("/decks") || referer?.includes("/co-writer");
+  const useQwen = !!(referer?.includes("/mindmap") || referer?.includes("/podcasts") || referer?.includes("/decks") || referer?.includes("/co-writer") || referer?.includes("/agents"));
   const model = useQwen ? "qwen2.5:7b" : COPILOT_MODEL;
+
+  // try {
+  //   const body = await req.clone().json();
+  //   console.log("[CopilotRoute] REFERER:", referer, "USE_QWEN:", useQwen, "MODEL:", model, "MESSAGES_COUNT:", body.messages?.length);
+  //   if (body.messages && body.messages.length > 0) {
+  //     const lastMsg = body.messages[body.messages.length - 1];
+  //     console.log("[CopilotRoute] Last message role:", lastMsg.role, "content:", lastMsg.content ? (lastMsg.content.slice(0, 150) + "...") : "empty", "tool_calls:", lastMsg.tool_calls ? JSON.stringify(lastMsg.tool_calls) : "none");
+  //   }
+  // } catch (e) {
+  //   console.log("[CopilotRoute] REFERER:", referer, "USE_QWEN:", useQwen, "MODEL:", model, "Error reading request body");
+  // }
 
   const serviceAdapter = new OpenAIAdapter({
     openai,
