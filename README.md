@@ -16,7 +16,12 @@
 
 [Features](#-key-features) · [Get Started](#-get-started) · [Explore](#-explore-studypal) · [TutorBot](#-tutorbot--persistent-autonomous-ai-tutors) · [CLI](#%EF%B8%8F-studypal-cli--agent-native-interface) · [Community](#-community--ecosystem)
 
+<br>
+<br>
 
+<a href="https://www.youtube.com/watch?v=zvAYWjQ-Tps" target="_blank">
+  <img src="https://img.youtube.com/vi/zvAYWjQ-Tps/maxresdefault.jpg" alt="StudyPal Demo Video" width="640" style="border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
+</a>
 
 </div>
 
