@@ -4,7 +4,7 @@
 
 # DeepTutor: Agent-Native Personalized Tutoring
 
-<a href="https://trendshift.io/repositories/17099" target="_blank"><img src="https://trendshift.io/api/badge/repositories/17099" alt="HKUDS%2FDeepTutor | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-000000?style=flat-square&logo=next.js&logoColor=white)](https://nextjs.org/)
@@ -60,10 +60,12 @@
 
 ## ✨ Key Features
 
-- **Unified Chat Workspace** — Five modes, one thread. Chat, Deep Solve, Quiz Generation, Deep Research, and Math Animator share the same context — start a conversation, escalate to multi-agent problem solving, generate quizzes, then deep-dive into research, all without losing a single message.
-- **Personal TutorBots** — Not chatbots — autonomous tutors. Each TutorBot lives in its own workspace with its own memory, personality, and skill set. They set reminders, learn new abilities, and evolve as you grow. Powered by [nanobot](https://github.com/HKUDS/nanobot).
+- **Unified Chat Workspace** — Six modes, one thread. Chat, Deep Solve, Quiz Generation, Deep Research, Math Animator, and Exam Simulator share the same context — start a conversation, escalate to multi-agent problem solving, generate quizzes, then deep-dive into research, all without losing a single message.
+- **StudyPal Learning Workspace** — A rich student toolkit featuring adaptive study planners, Pomodoro focus sessions with ambient sounds, interactive whiteboard sketching, semantic concept mindmaps, slide deck generation, and interactive flashcard decks.
+- **Personal TutorBots** — Not chatbots — autonomous tutors. Each TutorBot lives in its own workspace with its own memory, personality, and skill set. They support real-time voice sessions, set reminders, learn new abilities, and evolve as you grow. Powered by [nanobot](https://github.com/HKUDS/nanobot).
 - **AI Co-Writer** — A Markdown editor where AI is a first-class collaborator. Select text, rewrite, expand, or summarize — drawing from your knowledge base and the web. Every piece feeds back into your learning ecosystem.
 - **Guided Learning** — Turn your materials into structured, visual learning journeys. DeepTutor designs multi-step plans, generates interactive pages for each knowledge point, and lets you discuss alongside each step.
+- **Audio Overviews & Podcasts** — Generate conversational audio summaries and dual-host podcast discussions from learning material via Kokoro TTS.
 - **Knowledge Hub** — Upload PDFs, Markdown, and text files to build RAG-ready knowledge bases. Organize insights across sessions in color-coded notebooks. Your documents don't just sit there — they actively power every conversation.
 - **Persistent Memory** — DeepTutor builds a living profile of you: what you've studied, how you learn, and where you're heading. Shared across all features and TutorBots, it gets sharper with every interaction.
 - **Agent-Native CLI** — Every capability, knowledge base, session, and TutorBot is one command away. Rich terminal output for humans, structured JSON for AI agents and pipelines. Hand DeepTutor a [`SKILL.md`](SKILL.md) and your agents can operate it autonomously.
@@ -372,7 +374,7 @@ deeptutor kb create my-kb --doc textbook.pdf     # Build a knowledge base
 <img src="assets/figs/dt-chat.png" alt="Chat Workspace" width="800">
 </div>
 
-Five distinct modes coexist in a single workspace, bound by a **unified context management system**. Conversation history, knowledge bases, and references persist across modes — switch between them freely within the same topic, whenever the moment calls for it.
+Six distinct modes coexist in a single workspace, bound by a **unified context management system**. Conversation history, knowledge bases, and references persist across modes — switch between them freely within the same topic, whenever the moment calls for it.
 
 | Mode | What It Does |
 |:---|:---|
@@ -381,6 +383,7 @@ Five distinct modes coexist in a single workspace, bound by a **unified context 
 | **Quiz Generation** | Generate assessments grounded in your knowledge base, with built-in validation. |
 | **Deep Research** | Decompose a topic into subtopics, dispatch parallel research agents across RAG, web, and academic papers, and produce a fully cited report. |
 | **Math Animator** | Turn mathematical concepts into visual animations and storyboards powered by Manim. |
+| **Exam Simulator** | Enforce a timed mock exam environment with mixed question types, auto-submit rules, and comprehensive rubric-based grading. |
 
 Tools are **decoupled from workflows** — in every mode, you decide which tools to enable, how many to use, or whether to use any at all. The workflow orchestrates the reasoning; the tools are yours to compose.
 
@@ -437,6 +440,20 @@ DeepTutor maintains a persistent, evolving understanding of you through two comp
 
 Memory is shared across all features and all your TutorBots. The more you use DeepTutor, the more personalized and effective it becomes.
 
+### 🛠️ StudyPal Toolkit — Visual & Audio Study Workspace
+
+StudyPal provides a rich, interactive suite of visual and auditory learning tools, fully integrated with your personalized StudyPal memory and document context.
+
+- **🎙️ Voice Assistant** — Speak directly to your TutorBot in real-time. Powered by Vocal Bridge, it features an immersive full-screen audio session UI, live streaming text transcript, low-latency audio response, and customizable voice agent profiles.
+- **📅 Adaptive Study Planner** — Plan, organize, and track your learning progress using an interactive calendar driven by `@copilotkit` sidebar agents. Automatically schedules study blocks based on topics, and dynamically re-plans and re-balances remaining tasks when deadlines change or sessions are missed.
+- **⏱️ Focus Mode & Ambient Sounds** — Cultivate deep work sessions with a distraction-free countdown timer (supporting Focus, Short Break, and Long Break presets) integrated with a minimal tasks panel and background ambient soundscapes (Lofi Study, Rain, Forest/Birds, White Noise) with custom volume adjustments.
+- **🎨 Interactive Whiteboard** — Sketch, build diagrams, and visualize equations on an infinite digital canvas powered by an embedded draw.io iframe (controlled via postMessage API). Features a sidebar AI panel with tool capability toggles (RAG, Web Search) to auto-generate or refine diagrams, and supports graphing interactive GeoGebra curves.
+- **🕸️ Semantic Mindmap** — Transform static notes and text uploads into interactive, responsive mindmap node graphs. Driven by `@copilotkit`, it lets you visually trace relationships between concepts and query the AI tutor to expand or restructure nodes on the fly.
+- **🎧 Podcast Generator (Audio Overviews)** — Turn dense readings, notebooks, or custom topics into multi-turn conversational podcast scripts. Features a dual-host discussion between AI speakers Sarah and Alex, fully synthesized to high-quality audio files using a Kokoro TTS pipeline.
+- **📊 Study Decks (Presenter)** — Programmatically convert research papers, notes, or learning topics into clean, structured PowerPoint presentations (`.pptx`). Generates outline slides, fills out bulleted key concepts, and packages it as a downloadable deck styled with StudyPal design templates.
+- **🃏 Flashcards Workspace** — Generate self-study card decks from chat. Supports custom Q/A and Cloze deletions with built-in LaTeX math and code rendering. Students can flip cards with the spacebar and self-grade (Again or Knew it) to reinforce vocabulary and retention.
+- **📝 Exam Simulator** — Test your readiness in a timed, strict-mode exam simulator. Generates a mix of Multiple Choice, Short Answer, and Long Answer questions grounded in specific documents or topics. Enforces a strict countdown with auto-submission, followed by a comprehensive AI grading review using customized rubrics.
+
 ---
 
 ### 🦞 TutorBot — Persistent, Autonomous AI Tutors
@@ -452,6 +469,7 @@ TutorBot is not a chatbot — it is a **persistent, multi-instance agent** built
 </div>
 
 - **Soul Templates** — Define your tutor's personality, tone, and teaching philosophy through editable Soul files. Choose from built-in archetypes (Socratic, encouraging, rigorous) or craft your own — the soul shapes every response.
+- **Immersive Voice Sessions** — Speak directly to your TutorBot and listen to real-time replies. Includes a full-screen voice orb UI, low-latency audio response, and live scrolling transcript visualization powered by Vocal Bridge.
 - **Independent Workspace** — Each bot has its own directory with separate memory, sessions, skills, and configuration — fully isolated yet able to access DeepTutor's shared knowledge layer.
 - **Proactive Heartbeat** — Bots don't just respond — they initiate. The built-in Heartbeat system enables recurring study check-ins, review reminders, and scheduled tasks. Your tutor shows up even when you don't.
 - **Full Tool Access** — Every bot reaches into DeepTutor's complete toolkit: RAG retrieval, code execution, web search, academic paper search, deep reasoning, and brainstorming.
@@ -617,39 +635,14 @@ DeepTutor stands on the shoulders of outstanding open-source projects:
 | Simple & Fast RAG | Zero-Code Agent Framework | Automated Research | Ultra-Lightweight AI Agent |
 
 
-## 🤝 Contributing
 
-<div align="center">
 
-We hope DeepTutor becomes a gift for the community. 🎁
 
-<a href="https://github.com/HKUDS/DeepTutor/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=HKUDS/DeepTutor&max=999" alt="Contributors" />
-</a>
-
-</div>
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on setting up your development environment, code standards, and pull request workflow.
-
-## ⭐ Star History
-
-<div align="center">
-
-<a href="https://www.star-history.com/#HKUDS/DeepTutor&type=timeline&legend=top-left">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=HKUDS/DeepTutor&type=timeline&theme=dark&legend=top-left" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=HKUDS/DeepTutor&type=timeline&legend=top-left" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=HKUDS/DeepTutor&type=timeline&legend=top-left" />
-  </picture>
-</a>
-
-</div>
 
 <div align="center">
 
 **[Data Intelligence Lab @ HKU](https://github.com/HKUDS)**
 
-[⭐ Star us](https://github.com/HKUDS/DeepTutor/stargazers) · [🐛 Report a bug](https://github.com/HKUDS/DeepTutor/issues) · [💬 Discussions](https://github.com/HKUDS/DeepTutor/discussions)
 
 ---
 

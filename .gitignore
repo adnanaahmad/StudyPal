@@ -285,3 +285,9 @@ celerybeat.pid
 *.ogg
 !demo/*.mp4
 .worktrees/
+
+presentation_plan.md
+presentation_script.md
+studypal_custom_deck.pptx
+scratch/*
+.superpowers
